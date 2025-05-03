@@ -15,48 +15,14 @@
  */
 package dev.ricardovm.jpaqueryrepository;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 class FilterGenerator {
 
 	@SuppressWarnings("unchecked")
 	static <T extends JpaQueryRepository.Filter> T generateImplementation(Class<T> clazz) {
-		var handler = new InvocationHandler() {
-
-			private final Map<Object, Object> values = new HashMap<>();
-
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				var methodName = method.getName();
-
-				if (methodName.equals("filterValues") && method.getParameterCount() == 0) {
-					return values;
-				}
-
-				if (method.getReturnType().equals(Void.TYPE)) {
-					Object value;
-
-					if (args != null && args.length == 1) {
-						value = args[0];
-					} else if (args != null && args.length > 1) {
-						value = Arrays.asList(args);
-					} else {
-						value = true;
-					}
-
-					values.put(methodName, value);
-					System.out.printf("Setting %s to %s%n", methodName, Arrays.toString(args));
-					return null;
-				}
-
-				throw new UnsupportedOperationException("Method not supported: " + method);
-			}
-		};
+		var handler = new FilterInvocationHandler();
 
 		return (T) Proxy.newProxyInstance(
 				clazz.getClassLoader(),
