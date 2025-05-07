@@ -15,6 +15,14 @@
  */
 package dev.ricardovm.jpaqueryrepository;
 
+/**
+ * Represents a method of applying a filter to a value in the context of a
+ * defined filter and repository mechanism.
+ *
+ * @param <F> the type of the filter, extending JpaQueryRepository.Filter
+ * @param <V> the type of the value to be filtered
+ */
 public interface FilterMethod<F extends JpaQueryRepository.Filter, V> {
+
 	void accept(F filter, V value);
 }

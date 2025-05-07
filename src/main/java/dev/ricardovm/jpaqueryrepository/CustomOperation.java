@@ -17,6 +17,15 @@ package dev.ricardovm.jpaqueryrepository;
 
 import javax.persistence.criteria.Predicate;
 
+/**
+ * Represents a functional interface for defining custom operations
+ * to generate dynamic {@link Predicate} instances for queries.
+ * <p>
+ * Custom implementations of this interface are intended to provide
+ * specific behavior for constructing query predicates based on customized
+ * logic or requirements. This allows for flexible integration of
+ * non-standard query operations when building criteria-based queries.
+ */
 public interface CustomOperation {
 
 	Predicate apply(QueryContext context, Object value);

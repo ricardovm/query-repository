@@ -19,6 +19,13 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+/**
+ * Represents a context for query operations using the JPA Criteria API.
+ * It encapsulates common components required to build and execute
+ * dynamic queries such as {@link CriteriaBuilder}, {@link CriteriaQuery},
+ * and {@link Root}. This class acts as a container for these components,
+ * enabling access and use in advanced query construction.
+ */
 public class QueryContext {
 
 	private final CriteriaBuilder criteriaBuilder;

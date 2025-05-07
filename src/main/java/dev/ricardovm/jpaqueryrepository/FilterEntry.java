@@ -15,19 +15,19 @@
  */
 package dev.ricardovm.jpaqueryrepository;
 
-public class FilterEntry {
+class FilterEntry {
 
 	private final String field;
 	private final Operation operation;
 	private final CustomOperation customOperation;
 
-	public FilterEntry(String field, Operation operation) {
+	FilterEntry(String field, Operation operation) {
 		this.field = field;
 		this.operation = operation;
 		this.customOperation = null;
 	}
 
-	public FilterEntry(String field, CustomOperation customOperation) {
+	FilterEntry(String field, CustomOperation customOperation) {
 		this.field = field;
 		this.operation = null;
 		this.customOperation = customOperation;

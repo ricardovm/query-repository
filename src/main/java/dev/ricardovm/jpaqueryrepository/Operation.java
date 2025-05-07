@@ -15,6 +15,11 @@
  */
 package dev.ricardovm.jpaqueryrepository;
 
+/**
+ * Represents an enumeration of various operations that can be used in query
+ * filtering or dynamic query construction. Each operation corresponds to a
+ * specific condition or comparison.
+ */
 public enum Operation {
 	EQUALS("eq"),
 	GREATER("gt"),
