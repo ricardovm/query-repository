@@ -15,24 +15,6 @@
  */
 package dev.ricardovm.jpaqueryrepository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-
-public class Query<T, F> {
-
-	Query() {
-	}
-
-	public Query<T, F> load(Consumer<F> filter) {
-		return this;
-	}
-
-	public Optional<T> get() {
-		return Optional.empty();
-	}
-
-	public List<T> list() {
-		return List.of();
-	}
+public interface Filter2ParamsMethod<F extends JpaQueryRepository.Filter, V1, V2> {
+	void accept(F filter, V1 value, V2 value2);
 }

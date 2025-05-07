@@ -19,14 +19,14 @@ import java.util.function.Consumer;
 
 public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter> {
 
-	public final Query<T> query(Consumer<F> filter) {
+	public final Query<T, F> query(Consumer<F> filter) {
 		F filterImpl = createFilter();
 		filter.accept(filterImpl);
 
 		return query(filterImpl);
 	}
 
-	public final Query<T> query(F filter) {
+	public final Query<T, F> query(F filter) {
 		var filterValues = FilterGenerator.values(filter);
 		filterValues.forEach((key, value) -> {
 			System.out.printf("Filter key: %s, value: %s%n", key, value);
@@ -84,6 +84,10 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 		var field = filterValues.keySet().iterator().next();
 
 		addFilter((F o, Boolean v) -> method.accept(o), field);
+	}
+
+	protected <V1, V2> void addFilter(Filter2ParamsMethod<F, V1, V2> filter) {
+
 	}
 
 	protected abstract Class<T> entityClass();
