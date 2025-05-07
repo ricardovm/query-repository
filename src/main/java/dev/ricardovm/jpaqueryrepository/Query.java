@@ -130,6 +130,7 @@ public class Query<T, F> {
 				filterEntry.field());
 		}
 
-		predicates.add(filterEntry.customOperation().apply(criteriaBuilder, root, value));
+		var queryContext = new QueryContext(criteriaBuilder, criteriaQuery, root);
+		predicates.add(filterEntry.customOperation().apply(queryContext, value));
 	}
 }

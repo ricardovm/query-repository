@@ -15,11 +15,9 @@
  */
 package dev.ricardovm.jpaqueryrepository;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 
 public interface CustomOperation {
 
-	Predicate apply(CriteriaBuilder cb, Root<?> root, Object value);
+	Predicate apply(QueryContext context, Object value);
 }
