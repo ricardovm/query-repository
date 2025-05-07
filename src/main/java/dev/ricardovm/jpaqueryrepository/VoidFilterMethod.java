@@ -16,5 +16,6 @@
 package dev.ricardovm.jpaqueryrepository;
 
 public interface VoidFilterMethod<F extends JpaQueryRepository.Filter> {
+
 	void accept(F filter);
 }

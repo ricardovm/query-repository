@@ -16,5 +16,6 @@
 package dev.ricardovm.jpaqueryrepository;
 
 public interface Filter2ParamsMethod<F extends JpaQueryRepository.Filter, V1, V2> {
+
 	void accept(F filter, V1 value, V2 value2);
 }
