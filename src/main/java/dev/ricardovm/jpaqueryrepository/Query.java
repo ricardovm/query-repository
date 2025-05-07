@@ -81,7 +81,7 @@ public class Query<T, F> {
 	}
 
 	private void addOperationPredicate(FilterEntry filterEntry, Object value) {
-		Predicate predicate = null;
+		Predicate predicate;
 		Expression predicateField = root.get(filterEntry.field());
 
 		switch (filterEntry.operation()) {
@@ -119,9 +119,7 @@ public class Query<T, F> {
 				throw new IllegalStateException("Unexpected value: " + filterEntry.operation());
 		}
 
-		if (predicate != null) {
-			predicates.add(predicate);
-		}
+		predicates.add(predicate);
 	}
 
 	private void addCustomOperation(FilterEntry filterEntry, Object value) {
