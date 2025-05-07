@@ -21,6 +21,15 @@ import javax.persistence.criteria.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Represents a query builder class that facilitates dynamic query creation
+ * and execution using the JPA Criteria API. The query is defined based on
+ * provided filters and custom operations, allowing complex conditions to be
+ * applied to fetch entities of type {@code T}.
+ *
+ * @param <T> the entity type being queried.
+ * @param <F> the filter type to define query conditions.
+ */
 public class Query<T, F> {
 
 	private final EntityManager entityManager;
@@ -47,6 +56,12 @@ public class Query<T, F> {
 		return this;
 	}
 
+	/**
+	 * Retrieves the first result from the query built based on the provided filters and criteria.
+	 *
+	 * @return an {@link Optional} containing the first result if it exists,
+	 *         or an empty {@link Optional} if the result list is empty.
+	 */
 	public Optional<T> get() {
 		var results = buildQuery().setMaxResults(1).getResultList();
 
@@ -57,6 +72,13 @@ public class Query<T, F> {
 		return Optional.of(results.get(0));
 	}
 
+	/**
+	 * Executes the query built based on the applied filters and criteria,
+	 * retrieving the result as a list of entities of type {@code T}.
+	 *
+	 * @return a list of entities matching the specified conditions, or an empty
+	 *         list if no results are found.
+	 */
 	public List<T> list() {
 		return buildQuery().getResultList();
 	}
