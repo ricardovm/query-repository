@@ -59,4 +59,16 @@ class ProductRepositoryTest extends BaseJpaTest {
 		assertEquals("Laptop", products.get(0).getName());
 		assertEquals("Smartphone", products.get(1).getName());
 	}
+
+	@Test
+	void testMultipleFilters() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.description_like("%phone%");
+			f.price_gt(new BigDecimal("700.00"));
+		}).list();
+
+		assertEquals(1, products.size());
+		assertEquals("Smartphone", products.get(0).getName());
+	}
 }
