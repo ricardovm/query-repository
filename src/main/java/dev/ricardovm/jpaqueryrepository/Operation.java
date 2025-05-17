@@ -27,6 +27,8 @@ public enum Operation {
 	LESS("lt"),
 	LESS_EQUAL("le"),
 	NOT_EQUALS("ne"),
+	LIKE("like"),
+	NOT_LIKE("notLike"),
 	CONTAINS("in"),
 	NOT_CONTAINS("notIn"),
 	IS_NULL("null"),

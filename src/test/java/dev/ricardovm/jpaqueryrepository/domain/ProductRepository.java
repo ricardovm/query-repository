@@ -29,6 +29,7 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 	@Override
 	protected void buildCriteria() {
 		addFilter(Filter::id);
+		addFilter(Filter::description_like);
 		addFilter(Filter::price_gt);
 	}
 
@@ -45,6 +46,7 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 	public interface Filter extends JpaQueryRepository.Filter {
 
 		void id(Long id);
+		void description_like(String description);
 		void price_gt(BigDecimal price);
 	}
 }

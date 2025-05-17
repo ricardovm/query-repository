@@ -125,6 +125,12 @@ public class Query<T, F> {
 			case NOT_EQUALS:
 				predicate = criteriaBuilder.notEqual(predicateField, value);
 				break;
+			case LIKE:
+				predicate = criteriaBuilder.like(predicateField, (String) value);
+				break;
+			case NOT_LIKE:
+				predicate = criteriaBuilder.notLike(predicateField, (String) value);
+				break;
 			case CONTAINS:
 				predicate = predicateField.in((Collection) value);
 				break;

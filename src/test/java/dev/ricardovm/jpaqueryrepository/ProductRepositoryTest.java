@@ -37,6 +37,18 @@ class ProductRepositoryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testFindByDescriptionLike() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.description_like("%phone%");
+		}).list();
+
+		assertEquals(2, products.size());
+		assertEquals("Smartphone", products.get(0).getName());
+		assertEquals("Headphones", products.get(1).getName());
+	}
+
+	@Test
 	void testFindByPrice() {
 		var productRepository = new ProductRepository(em);
 		var products = productRepository.query(f -> {
