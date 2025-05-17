@@ -8,6 +8,15 @@
 	<artifactId>jpa-query-repository</artifactId>
 	<version>1.0-SNAPSHOT</version>
 
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
+			<distribution>repo</distribution>
+			<comments>See the LICENSE file in the root of this project for details.</comments>
+		</license>
+	</licenses>
+
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
