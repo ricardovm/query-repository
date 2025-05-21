@@ -110,13 +110,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 *               and a value, enabling the customization of filter logic for the query.
 	 */
 	protected <V> void addFilter(FilterMethod<F, V> method) {
-		var filter = FilterGenerator.generateImplementation(filterClass());
-
-		method.accept(filter, null);
-
-		var filterValues = FilterGenerator.values(filter);
-		var filterName = filterValues.keySet().iterator().next();
-
+		var filterName = extractFilterName(method);
 		addFilter(method, filterName);
 	}
 
@@ -180,13 +174,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 *                        custom logic for constructing filter predicates dynamically.
 	 */
 	protected <V> void addFilter(FilterMethod<F, V> method, CustomOperation customOperation) {
-		var filter = FilterGenerator.generateImplementation(filterClass());
-
-		method.accept(filter, null);
-
-		var filterValues = FilterGenerator.values(filter);
-		var filterName = filterValues.keySet().iterator().next();
-
+		var filterName = extractFilterName(method);
 		addFilter(method, filterName, customOperation);
 	}
 
@@ -216,14 +204,8 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 *               and enables the customization of filter logic for the query.
 	 */
 	protected void addFilter(VoidFilterMethod<F> method) {
-		var filter = FilterGenerator.generateImplementation(filterClass());
-
-		method.accept((F) filter);
-
-		var filterValues = FilterGenerator.values(filter);
-		var field = filterValues.keySet().iterator().next();
-
-		addFilter((F o, Boolean v) -> method.accept(o), field);
+		var filterName = extractFilterName(method);
+		addFilter((F o, Boolean v) -> method.accept(o), filterName);
 	}
 
 	/**
@@ -240,13 +222,28 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 */
 	protected <V1, V2> void addFilter(Filter2ParamsMethod<F, V1, V2> method, CustomOperation customOperation) {
 		var filter = FilterGenerator.generateImplementation(filterClass());
+		var filterName = extractFilterName(method);
 
-		method.accept((F) filter, null, null);
+		addFilter((F o, Object[] v) -> method.accept(filter, (V1) v[0], (V2) v[1]), filterName, customOperation);
+	}
+
+	@SuppressWarnings("unchecked")
+	private String extractFilterName(Object methodReference) {
+		var filter = FilterGenerator.generateImplementation(filterClass());
+
+		if (methodReference instanceof FilterMethod) {
+			var filterMethod = (FilterMethod<F, ?>) methodReference;
+			filterMethod.accept(filter, null);
+		} else if (methodReference instanceof Filter2ParamsMethod) {
+			var twoParamsMethod = (Filter2ParamsMethod<F, ?, ?>) methodReference;
+			twoParamsMethod.accept(filter, null, null);
+		} else if (methodReference instanceof VoidFilterMethod) {
+			var voidMethod = (VoidFilterMethod<F>) methodReference;
+			voidMethod.accept(filter);
+		}
 
 		var filterValues = FilterGenerator.values(filter);
-		var field = filterValues.keySet().iterator().next();
-
-		addFilter((F o, Object[] v) -> method.accept(filter, (V1) v[0], (V2) v[1]), field, customOperation);
+		return filterValues.keySet().iterator().next();
 	}
 
 	/**
