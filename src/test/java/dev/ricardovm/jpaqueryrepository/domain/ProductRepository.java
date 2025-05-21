@@ -18,6 +18,8 @@ package dev.ricardovm.jpaqueryrepository.domain;
 import dev.ricardovm.jpaqueryrepository.JpaQueryRepository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import java.math.BigDecimal;
 
 public class ProductRepository extends JpaQueryRepository<Product, ProductRepository.Filter> {
@@ -31,6 +33,18 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 		addFilter(Filter::id);
 		addFilter(Filter::description_like);
 		addFilter(Filter::price_gt);
+		addFilter(Filter::orderMinimumQuantity_exists, (ctx, value) -> {
+			var minimumQuantity = (Integer) value;
+
+			Subquery<Integer> subquery = ctx.criteriaQuery().subquery(Integer.class);
+			Root<OrderItem> subRoot = subquery.from(OrderItem.class);
+
+			subquery.select(ctx.criteriaBuilder().literal(1))
+				.where(ctx.criteriaBuilder().greaterThanOrEqualTo(subRoot.get("quantity"), minimumQuantity),
+					ctx.criteriaBuilder().equal(subRoot.get("product"), ctx.root()));
+
+			return ctx.criteriaBuilder().exists(subquery);
+		});
 	}
 
 	@Override
@@ -48,5 +62,6 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 		void id(Long id);
 		void description_like(String description);
 		void price_gt(BigDecimal price);
+		void orderMinimumQuantity_exists(Integer minimumQuantity);
 	}
 }

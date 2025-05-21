@@ -115,9 +115,9 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 		method.accept(filter, null);
 
 		var filterValues = FilterGenerator.values(filter);
-		var field = filterValues.keySet().iterator().next();
+		var filterName = filterValues.keySet().iterator().next();
 
-		addFilter(method, field);
+		addFilter(method, filterName);
 	}
 
 	/**
@@ -165,6 +165,29 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 */
 	protected <V> void addFilter(FilterMethod<F, V> method, String filterName, String field, Operation operation) {
 		filterEntries.put(filterName, new FilterEntry(field, operation));
+	}
+
+	/**
+	 * Adds a filter to the query configuration. This method generates an implementation
+	 * of the filter type and applies the specified filter method. The filter criteria
+	 * are defined based on the provided custom operation.
+	 *
+	 * @param <V>             the type of the value associated with the filter method.
+	 * @param method          the filter method used to define the filter criteria. It accepts
+	 *                        a filter instance and a value, enabling the customization of
+	 *                        filter logic for the query.
+	 * @param customOperation the custom operation that defines the filter to apply. Allows
+	 *                        custom logic for constructing filter predicates dynamically.
+	 */
+	protected <V> void addFilter(FilterMethod<F, V> method, CustomOperation customOperation) {
+		var filter = FilterGenerator.generateImplementation(filterClass());
+
+		method.accept(filter, null);
+
+		var filterValues = FilterGenerator.values(filter);
+		var filterName = filterValues.keySet().iterator().next();
+
+		addFilter(method, filterName, customOperation);
 	}
 
 	/**

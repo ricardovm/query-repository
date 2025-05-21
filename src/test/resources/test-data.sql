@@ -14,3 +14,4 @@ INSERT INTO order_items (id, order_id, product_id, quantity, unitPrice) VALUES (
 INSERT INTO order_items (id, order_id, product_id, quantity, unitPrice) VALUES (4, 2, 4, 1, 499.99);
 INSERT INTO order_items (id, order_id, product_id, quantity, unitPrice) VALUES (5, 3, 5, 2, 349.99);
 INSERT INTO order_items (id, order_id, product_id, quantity, unitPrice) VALUES (6, 3, 3, 1, 199.99);
+INSERT INTO order_items (id, order_id, product_id, quantity, unitPrice) VALUES (7, 3, 5, 12, 199.99);

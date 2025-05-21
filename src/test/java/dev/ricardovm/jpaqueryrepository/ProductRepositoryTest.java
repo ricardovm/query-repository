@@ -71,4 +71,15 @@ class ProductRepositoryTest extends BaseJpaTest {
 		assertEquals(1, products.size());
 		assertEquals("Smartphone", products.get(0).getName());
 	}
+
+	@Test
+	void testOrderMinimumQuantityExists() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.orderMinimumQuantity_exists(12);
+		}).list();
+
+		assertEquals(1, products.size());
+		assertEquals("Monitor", products.get(0).getName());
+	}
 }
