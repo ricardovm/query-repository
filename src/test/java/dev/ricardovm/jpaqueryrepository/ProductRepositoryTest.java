@@ -80,6 +80,6 @@ class ProductRepositoryTest extends BaseJpaTest {
 		}).list();
 
 		assertEquals(1, products.size());
-		assertEquals("Monitor", products.get(0).getName());
+		assertEquals("Smartphone", products.get(0).getName());
 	}
 }
