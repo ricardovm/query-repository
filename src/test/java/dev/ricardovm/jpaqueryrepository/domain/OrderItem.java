@@ -15,94 +15,88 @@
  */
 package dev.ricardovm.jpaqueryrepository.domain;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
 public class OrderItem {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "order_id")
+	private Order order;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "product_id")
+	private Product product;
 
-    private Integer quantity;
-    private BigDecimal unitPrice;
+	private Integer quantity;
+	private BigDecimal unitPrice;
 
-    public OrderItem() {
-    }
+	public OrderItem() {
+	}
 
-    public OrderItem(Product product, Integer quantity, BigDecimal unitPrice) {
-        this.product = product;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-    }
+	public OrderItem(Product product, Integer quantity, BigDecimal unitPrice) {
+		this.product = product;
+		this.quantity = quantity;
+		this.unitPrice = unitPrice;
+	}
 
-    public Long getId() {
-        return id;
-    }
+	public Long getId() {
+		return id;
+	}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public Order getOrder() {
-        return order;
-    }
+	public Order getOrder() {
+		return order;
+	}
 
-    public void setOrder(Order order) {
-        this.order = order;
-    }
+	public void setOrder(Order order) {
+		this.order = order;
+	}
 
-    public Product getProduct() {
-        return product;
-    }
+	public Product getProduct() {
+		return product;
+	}
 
-    public void setProduct(Product product) {
-        this.product = product;
-    }
+	public void setProduct(Product product) {
+		this.product = product;
+	}
 
-    public Integer getQuantity() {
-        return quantity;
-    }
+	public Integer getQuantity() {
+		return quantity;
+	}
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
+	public void setQuantity(Integer quantity) {
+		this.quantity = quantity;
+	}
 
-    public BigDecimal getUnitPrice() {
-        return unitPrice;
-    }
+	public BigDecimal getUnitPrice() {
+		return unitPrice;
+	}
 
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.unitPrice = unitPrice;
-    }
+	public void setUnitPrice(BigDecimal unitPrice) {
+		this.unitPrice = unitPrice;
+	}
 
-    public BigDecimal getTotal() {
-        return unitPrice.multiply(new BigDecimal(quantity));
-    }
+	public BigDecimal getTotal() {
+		return unitPrice.multiply(new BigDecimal(quantity));
+	}
 
-    @Override
-    public String toString() {
-        return "OrderItem{" +
-                "id=" + id +
-                ", product=" + (product != null ? product.getName() : "null") +
-                ", quantity=" + quantity +
-                ", unitPrice=" + unitPrice +
-                '}';
-    }
+	@Override
+	public String toString() {
+		return "OrderItem{" +
+			"id=" + id +
+			", product=" + (product != null ? product.getName() : "null") +
+			", quantity=" + quantity +
+			", unitPrice=" + unitPrice +
+			'}';
+	}
 }

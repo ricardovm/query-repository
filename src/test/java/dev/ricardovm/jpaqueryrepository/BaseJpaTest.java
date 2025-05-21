@@ -26,32 +26,32 @@ import java.util.HashMap;
 
 public abstract class BaseJpaTest {
 
-    protected static EntityManagerFactory emf;
-    protected EntityManager em;
+	protected static EntityManagerFactory emf;
+	protected EntityManager em;
 
-    @BeforeAll
-    public static void setupClass() {
-        var properties = new HashMap<String, String>();
+	@BeforeAll
+	public static void setupClass() {
+		var properties = new HashMap<String, String>();
 
-        properties.put("javax.persistence.sql-load-script-source", "test-data.sql");
+		properties.put("javax.persistence.sql-load-script-source", "test-data.sql");
 
-        emf = Persistence.createEntityManagerFactory("test-persistence-unit", properties);
-    }
+		emf = Persistence.createEntityManagerFactory("test-persistence-unit", properties);
+	}
 
-    @BeforeEach
-    public void setUp() {
-        em = emf.createEntityManager();
-        em.getTransaction().begin();
-    }
+	@BeforeEach
+	public void setUp() {
+		em = emf.createEntityManager();
+		em.getTransaction().begin();
+	}
 
-    @AfterEach
-    public void tearDown() {
-        if (em != null) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
+	@AfterEach
+	public void tearDown() {
+		if (em != null) {
+			if (em.getTransaction().isActive()) {
+				em.getTransaction().rollback();
+			}
 
-            em.close();
-        }
-    }
+			em.close();
+		}
+	}
 }

@@ -8,8 +8,8 @@ import java.util.List;
 public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.Filter> {
 
 	public OrderRepository(EntityManager em) {
-        super(em);
-    }
+		super(em);
+	}
 
 	@Override
 	protected void buildCriteria() {
