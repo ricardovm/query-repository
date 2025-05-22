@@ -133,6 +133,51 @@ For more complex queries, you can define custom operations by implementing the `
 
 This allows you to create complex queries that go beyond the standard operations provided by the library.
 
+### Example: Custom Operation with Subquery
+
+```java
+public class ProductRepository extends JpaQueryRepository<Product, ProductRepository.Filter> {
+
+    @Override
+    protected void buildCriteria() {
+        // Standard filters
+        addFilter(Filter::id);
+        addFilter(Filter::description_like);
+
+        // Custom operation using a subquery
+        addFilter(Filter::orderMinimumQuantity_exists, (ctx, value) -> {
+            var minimumQuantity = (Integer) value;
+
+            // Create a subquery
+            Subquery<Integer> subquery = ctx.criteriaQuery().subquery(Integer.class);
+            Root<OrderItem> subRoot = subquery.from(OrderItem.class);
+
+            // Build the subquery condition
+            subquery.select(ctx.criteriaBuilder().literal(1))
+                .where(ctx.criteriaBuilder().greaterThanOrEqualTo(subRoot.get("quantity"), minimumQuantity),
+                    ctx.criteriaBuilder().equal(subRoot.get("product"), ctx.root()));
+
+            // Return an EXISTS predicate
+            return ctx.criteriaBuilder().exists(subquery);
+        });
+    }
+
+    public interface Filter extends JpaQueryRepository.Filter {
+        void id(Long id);
+        void description_like(String description);
+        void orderMinimumQuantity_exists(Integer minimumQuantity);
+    }
+}
+
+// Usage
+List<Product> products = productRepository.query(f -> {
+    f.description_like("%keyboard%");
+    f.orderMinimumQuantity_exists(5); // Find products ordered with quantity >= 5
+}).list();
+```
+
+This example demonstrates a custom operation that uses a subquery to find products that have been ordered with a quantity greater than or equal to a specified minimum value.
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
