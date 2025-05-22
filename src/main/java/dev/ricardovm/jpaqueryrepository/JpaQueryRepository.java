@@ -239,7 +239,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 		var filterName = extractFilterName(method);
 		validateFetchFilterName(filterName);
 
-		var field = filterName.substring(5).toLowerCase();
+		var field = Character.toLowerCase(filterName.charAt(5)) + filterName.substring(6);
 
 		addEntityFetch(filterName, field);
 	}
