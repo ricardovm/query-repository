@@ -19,7 +19,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Represents a query builder class that facilitates dynamic query creation
@@ -34,6 +33,7 @@ public class Query<T, F> {
 
 	private final EntityManager entityManager;
 	private final Map<String, FilterEntry> filterEntries;
+	private final Map<String, String> fetchEntries;
 	private final Map<String, Object> filterValues;
 
 	private final CriteriaBuilder criteriaBuilder;
@@ -42,18 +42,15 @@ public class Query<T, F> {
 	private final List<Predicate> predicates = new ArrayList<>();
 
 	Query(Class<T> entityClass, EntityManager entityManager, Map<String, FilterEntry> filterEntries,
-	      Map<String, Object> filterValues) {
+	      Map<String, Object> filterValues, Map<String, String> fetchEntries) {
 		this.entityManager = entityManager;
 		this.filterEntries = filterEntries;
 		this.filterValues = filterValues;
+		this.fetchEntries = fetchEntries;
 
 		this.criteriaBuilder = entityManager.getCriteriaBuilder();
 		this.criteriaQuery = criteriaBuilder.createQuery(entityClass);
 		this.root = criteriaQuery.from(entityClass);
-	}
-
-	public Query<T, F> load(Consumer<F> filter) {
-		return this;
 	}
 
 	/**
@@ -63,7 +60,7 @@ public class Query<T, F> {
 	 *         or an empty {@link Optional} if the result list is empty.
 	 */
 	public Optional<T> get() {
-		var results = buildQuery().setMaxResults(1).getResultList();
+		var results = buildQuery(null).setMaxResults(1).getResultList();
 
 		if (results.isEmpty()) {
 			return Optional.empty();
@@ -80,14 +77,25 @@ public class Query<T, F> {
 	 *         list if no results are found.
 	 */
 	public List<T> list() {
-		return buildQuery().getResultList();
+		var resultList = buildQuery(null).getResultList();
+
+		for (var entry : filterValues.entrySet()) {
+			if (!fetchEntries.containsKey(entry.getKey())) continue;
+
+			var fetchEntry = fetchEntries.get(entry.getKey());
+			buildQuery(fetchEntry).getResultList();
+		}
+
+		return resultList;
 	}
 
-	private TypedQuery<T> buildQuery() {
+	private TypedQuery<T> buildQuery(String fetchField) {
 		for (var entry : filterValues.entrySet()) {
+			if (fetchEntries.containsKey(entry.getKey())) continue;
+
 			var filterEntry = filterEntries.get(entry.getKey());
 			if (filterEntry == null) {
-				throw new IllegalStateException("Filter entry '" + entry.getKey() + "' not found");
+				throw new IllegalStateException("Query entry '" + entry.getKey() + "' not found");
 			}
 
 			if (filterEntry.operation() != null) {
@@ -95,6 +103,12 @@ public class Query<T, F> {
 			} else {
 				addCustomOperation(filterEntry, entry.getValue());
 			}
+		}
+
+		if (fetchField != null) {
+			criteriaQuery.distinct(true);
+			Join fetchItem = (Join) root.fetch(fetchField, JoinType.INNER);
+			fetchItem.alias(fetchField);
 		}
 
 		criteriaQuery.select(root).where(predicates.toArray(new Predicate[0]));

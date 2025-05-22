@@ -31,6 +31,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	private final EntityManager entityManager;
 
 	private final Map<String, FilterEntry> filterEntries = new LinkedHashMap<>();
+	private final Map<String, String> fetchEntries = new LinkedHashMap<>();
 
 	protected JpaQueryRepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
@@ -72,7 +73,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 			System.out.printf("Filter key: %s, value: %s%n", key, value);
 		});
 
-		return new Query<>(entityClass(), entityManager, filterEntries, filterValues);
+		return new Query<>(entityClass(), entityManager, filterEntries, filterValues, fetchEntries);
 	}
 
 	/**
@@ -227,6 +228,44 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 		addFilter((F o, Object[] v) -> method.accept(filter, (V1) v[0], (V2) v[1]), filterName, customOperation);
 	}
 
+	/**
+	 * Adds an entity fetch operation by extracting and validating the filter name
+	 * and associating it with a corresponding entity field.
+	 *
+	 * @param method the VoidFilterMethod instance representing the filter method for entity fetch
+	 * @param <V>    the type parameter representing the value type of the filter method
+	 */
+	protected final <V> void addEntityFetch(VoidFilterMethod<F> method) {
+		var filterName = extractFilterName(method);
+		validateFetchFilterName(filterName);
+
+		var field = filterName.substring(5).toLowerCase();
+
+		addEntityFetch(filterName, field);
+	}
+
+	/**
+	 * Adds an entity fetch configuration to the query construction process.
+	 * This method links a field in the entity to a fetch-related filter method, enabling
+	 * the inclusion of related entities in the query results.
+	 *
+	 * @param <V>    the type of the value associated with the fetch method.
+	 * @param method the fetch-related filter method used to determine the fetch criteria.
+	 *               It operates on a filter instance and configures fetch logic.
+	 * @param field  the name of the entity property or field to be included in the fetch operation.
+	 *               This corresponds to a relationship or property within the entity.
+	 */
+	protected final <V> void addEntityFetch(VoidFilterMethod<F> method, String field) {
+		var filterName = extractFilterName(method);
+		validateFetchFilterName(filterName);
+
+		addEntityFetch(filterName, field);
+	}
+
+	private void addEntityFetch(String filterName, String field) {
+		fetchEntries.put(filterName, field);
+	}
+
 	@SuppressWarnings("unchecked")
 	private String extractFilterName(Object methodReference) {
 		var filter = FilterGenerator.generateImplementation(filterClass());
@@ -244,6 +283,12 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 
 		var filterValues = FilterGenerator.values(filter);
 		return filterValues.keySet().iterator().next();
+	}
+
+	private void validateFetchFilterName(String filterName) {
+		if (!filterName.startsWith("fetch")) {
+			throw new IllegalArgumentException("Fetch filter name must start with 'fetch'");
+		}
 	}
 
 	/**

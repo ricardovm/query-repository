@@ -15,6 +15,8 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 	protected void buildCriteria() {
 		addFilter(Filter::status);
 		addFilter(Filter::status_in);
+
+		addEntityFetch(Filter::fetchItems);
 	}
 
 	@Override
@@ -30,5 +32,7 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 	public interface Filter extends JpaQueryRepository.Filter {
 		void status(String status);
 		void status_in(List<String> statuses);
+
+		void fetchItems();
 	}
 }
