@@ -41,8 +41,8 @@ class OrderRepositoryTest extends BaseJpaTest {
 		var orderRepository = new OrderRepository(em);
 		var orders = orderRepository.query(f -> {
 			f.status_in(List.of("SHIPPED", "COMPLETED"));
-
 			f.fetchItems();
+			f.fetchItemsProduct();
 		}).list();
 
 		em.clear();
@@ -52,14 +52,14 @@ class OrderRepositoryTest extends BaseJpaTest {
 		var order = orders.get(0);
 		assertEquals(1L, order.getId());
 		assertEquals(2, order.getItems().size());
-//		assertEquals("Laptop", order.getItems().get(0).getProduct().getName());
-//		assertEquals("Headphones", order.getItems().get(1).getProduct().getName());
+		assertEquals("Laptop", order.getItems().get(0).getProduct().getName());
+		assertEquals("Headphones", order.getItems().get(1).getProduct().getName());
 
 		order = orders.get(1);
 		assertEquals(3L, order.getId());
 		assertEquals(3, order.getItems().size());
-//		assertEquals("Monitor", order.getItems().get(0).getProduct().getName());
-//		assertEquals("Headphones", order.getItems().get(1).getProduct().getName());
-//		assertEquals("Smartphone", order.getItems().get(2).getProduct().getName());
+		assertEquals("Monitor", order.getItems().get(0).getProduct().getName());
+		assertEquals("Headphones", order.getItems().get(1).getProduct().getName());
+		assertEquals("Smartphone", order.getItems().get(2).getProduct().getName());
 	}
 }

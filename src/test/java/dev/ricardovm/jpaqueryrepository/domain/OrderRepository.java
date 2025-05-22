@@ -17,6 +17,7 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 		addFilter(Filter::status_in);
 
 		addEntityFetch(Filter::fetchItems);
+		addEntityFetch(Filter::fetchItemsProduct, "items.product");
 	}
 
 	@Override
@@ -34,5 +35,6 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 		void status_in(List<String> statuses);
 
 		void fetchItems();
+		void fetchItemsProduct();
 	}
 }

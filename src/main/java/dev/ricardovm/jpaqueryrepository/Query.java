@@ -29,28 +29,25 @@ import java.util.*;
  * @param <T> the entity type being queried.
  * @param <F> the filter type to define query conditions.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Query<T, F> {
 
+	private final Class<T> entityClass;
 	private final EntityManager entityManager;
 	private final Map<String, FilterEntry> filterEntries;
 	private final Map<String, String> fetchEntries;
 	private final Map<String, Object> filterValues;
 
 	private final CriteriaBuilder criteriaBuilder;
-	private final CriteriaQuery<T> criteriaQuery;
-	private final Root<T> root;
-	private final List<Predicate> predicates = new ArrayList<>();
 
 	Query(Class<T> entityClass, EntityManager entityManager, Map<String, FilterEntry> filterEntries,
 	      Map<String, Object> filterValues, Map<String, String> fetchEntries) {
+		this.entityClass = entityClass;
 		this.entityManager = entityManager;
 		this.filterEntries = filterEntries;
 		this.filterValues = filterValues;
 		this.fetchEntries = fetchEntries;
-
 		this.criteriaBuilder = entityManager.getCriteriaBuilder();
-		this.criteriaQuery = criteriaBuilder.createQuery(entityClass);
-		this.root = criteriaQuery.from(entityClass);
 	}
 
 	/**
@@ -90,6 +87,11 @@ public class Query<T, F> {
 	}
 
 	private TypedQuery<T> buildQuery(String fetchField) {
+		var predicates = new ArrayList<Predicate>();
+
+		var criteriaQuery = criteriaBuilder.createQuery(entityClass);
+		var root = criteriaQuery.from(entityClass);
+
 		for (var entry : filterValues.entrySet()) {
 			if (fetchEntries.containsKey(entry.getKey())) continue;
 
@@ -99,78 +101,87 @@ public class Query<T, F> {
 			}
 
 			if (filterEntry.operation() != null) {
-				addOperationPredicate(filterEntry, entry.getValue());
+				predicates.add(createOperationPredicate(root, filterEntry, entry.getValue()));
 			} else {
-				addCustomOperation(filterEntry, entry.getValue());
+				predicates.add(addCustomOperation(criteriaQuery, root, filterEntry, entry.getValue()));
 			}
 		}
 
+		Selection selectField = root;
+		root.alias("this_");
 		if (fetchField != null) {
-			criteriaQuery.distinct(true);
-			Join fetchItem = (Join) root.fetch(fetchField, JoinType.INNER);
-			fetchItem.alias(fetchField);
+			selectField = fetchEntity(criteriaQuery, root, fetchField);
 		}
 
-		criteriaQuery.select(root).where(predicates.toArray(new Predicate[0]));
+		criteriaQuery.select(selectField).where(predicates.toArray(new Predicate[0]));
 
 		return entityManager.createQuery(criteriaQuery);
 	}
 
-	private void addOperationPredicate(FilterEntry filterEntry, Object value) {
-		Predicate predicate;
+	private Selection<?> fetchEntity(CriteriaQuery<T> criteriaQuery, Root<T> root, String fetchField) {
+		criteriaQuery.distinct(true);
+
+		var fields = fetchField.split("\\.");
+		var currentRoot = (From) root;
+
+		var alias = "_";
+
+		for (var i = 0; i < fields.length - 1; i++) {
+			var field = fields[i];
+			var fetchItem = currentRoot.join(field);
+			alias += field + "_";
+			fetchItem.alias(alias);
+			currentRoot = fetchItem;
+		}
+
+		var field = fields[fields.length - 1];
+		var fetchItem = (Join) currentRoot.fetch(field, JoinType.INNER);
+		alias += field + "_";
+		fetchItem.alias(alias);
+
+		return currentRoot;
+	}
+
+	private Predicate createOperationPredicate(Root<T> root, FilterEntry filterEntry, Object value) {
 		Expression predicateField = root.get(filterEntry.field());
 
 		switch (filterEntry.operation()) {
 			case EQUALS:
-				predicate = criteriaBuilder.equal(predicateField, value);
-				break;
+				return criteriaBuilder.equal(predicateField, value);
 			case GREATER:
-				predicate = criteriaBuilder.greaterThan(predicateField, (Comparable) value);
-				break;
+				return criteriaBuilder.greaterThan(predicateField, (Comparable) value);
 			case GREATER_EQUAL:
-				predicate = criteriaBuilder.greaterThanOrEqualTo(predicateField, (Comparable) value);
-				break;
+				return criteriaBuilder.greaterThanOrEqualTo(predicateField, (Comparable) value);
 			case LESS:
-				predicate = criteriaBuilder.lessThan(predicateField, (Comparable) value);
-				break;
+				return criteriaBuilder.lessThan(predicateField, (Comparable) value);
 			case LESS_EQUAL:
-				predicate = criteriaBuilder.lessThanOrEqualTo(predicateField, (Comparable) value);
-				break;
+				return criteriaBuilder.lessThanOrEqualTo(predicateField, (Comparable) value);
 			case NOT_EQUALS:
-				predicate = criteriaBuilder.notEqual(predicateField, value);
-				break;
+				return criteriaBuilder.notEqual(predicateField, value);
 			case LIKE:
-				predicate = criteriaBuilder.like(predicateField, (String) value);
-				break;
+				return criteriaBuilder.like(predicateField, (String) value);
 			case NOT_LIKE:
-				predicate = criteriaBuilder.notLike(predicateField, (String) value);
-				break;
+				return criteriaBuilder.notLike(predicateField, (String) value);
 			case CONTAINS:
-				predicate = predicateField.in((Collection) value);
-				break;
+				return predicateField.in((Collection) value);
 			case NOT_CONTAINS:
-				predicate = criteriaBuilder.not(predicateField.in((Collection) value));
-				break;
+				return criteriaBuilder.not(predicateField.in((Collection) value));
 			case IS_NULL:
-				predicate = criteriaBuilder.isNull(predicateField);
-				break;
+				return criteriaBuilder.isNull(predicateField);
 			case NOT_NULL:
-				predicate = criteriaBuilder.isNotNull(predicateField);
-				break;
+				return criteriaBuilder.isNotNull(predicateField);
 			default:
 				throw new IllegalStateException("Unexpected value: " + filterEntry.operation());
 		}
-
-		predicates.add(predicate);
 	}
 
-	private void addCustomOperation(FilterEntry filterEntry, Object value) {
+	private Predicate addCustomOperation(CriteriaQuery<T> criteriaQuery, Root<T> root, FilterEntry filterEntry, Object value) {
 		if (filterEntry.customOperation() == null) {
 			throw new IllegalStateException("Custom operation not found for filter entry: " +
 				filterEntry.field());
 		}
 
 		var queryContext = new QueryContext(criteriaBuilder, criteriaQuery, root);
-		predicates.add(filterEntry.customOperation().apply(queryContext, value));
+		return filterEntry.customOperation().apply(queryContext, value);
 	}
 }
