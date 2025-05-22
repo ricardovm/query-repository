@@ -30,7 +30,7 @@ import java.util.*;
  * @param <F> the filter type to define query conditions.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class Query<T, F> {
+public class Query<T> {
 
 	private final Class<T> entityClass;
 	private final EntityManager entityManager;

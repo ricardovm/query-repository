@@ -49,7 +49,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 * The resulting {@link Query} can be further used to retrieve query results,
 	 * such as a list of entities or a single entity.
 	 */
-	public final Query<T, F> query(Consumer<F> filter) {
+	public final Query<T> query(Consumer<F> filter) {
 		F filterImpl = createFilter();
 		filter.accept(filterImpl);
 
@@ -67,7 +67,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 * The returned {@code Query} can be used to retrieve results,
 	 * such as a list or a single entity, based on the filter criteria.
 	 */
-	public final Query<T, F> query(F filter) {
+	public final Query<T> query(F filter) {
 		var filterValues = FilterGenerator.values(filter);
 		filterValues.forEach((key, value) -> {
 			System.out.printf("Filter key: %s, value: %s%n", key, value);
