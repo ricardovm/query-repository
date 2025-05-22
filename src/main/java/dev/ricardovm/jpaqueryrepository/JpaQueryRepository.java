@@ -63,7 +63,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 * @param filter an instance of {@code F} that defines the filter criteria
 	 *               used to customize the query. The filter should specify
 	 *               the field values and operations for the query's conditions.
-	 * @return a {@code Query<T, F>} instance representing the constructed query.
+	 * @return a {@code Query<T>} instance representing the constructed query.
 	 * The returned {@code Query} can be used to retrieve results,
 	 * such as a list or a single entity, based on the filter criteria.
 	 */
