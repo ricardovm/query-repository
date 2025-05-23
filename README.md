@@ -61,6 +61,11 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
         // Define entity fetches
         addEntityFetch(Filter::fetchItems);
         addEntityFetch(Filter::fetchItemsProduct, "items.product");
+
+        // Define sort fields
+        addSortField(Filter::sortById);
+        addSortField(Filter::sortByDate);
+        addSortField(Filter::sortByTotal_desc);
     }
 
     @Override
@@ -79,6 +84,10 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 
         void fetchItems();
         void fetchItemsProduct();
+
+        void sortById();
+        void sortByDate(SortOrder sortOrder);
+        void sortByTotal_desc();
     }
 }
 ```
@@ -89,11 +98,12 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 // Create repository instance
 OrderRepository orderRepository = new OrderRepository(entityManager);
 
-// Query with lambda
+// Get a list
 List<Order> orders = orderRepository.query(f -> {
     f.status_in(List.of("SHIPPED", "COMPLETED"));
     f.fetchItems();
     f.fetchItemsProduct();
+    f.sortByPrice_desc();
 }).list();
 
 // Or get a single result
