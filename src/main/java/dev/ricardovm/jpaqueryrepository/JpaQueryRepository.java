@@ -32,6 +32,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 
 	private final Map<String, FilterEntry> filterEntries = new LinkedHashMap<>();
 	private final Map<String, String> fetchEntries = new LinkedHashMap<>();
+	private final Map<String, SortEntry> sortEntries = new LinkedHashMap<>();
 
 	protected JpaQueryRepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
@@ -73,7 +74,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 			System.out.printf("Filter key: %s, value: %s%n", key, value);
 		});
 
-		return new Query<>(entityClass(), entityManager, filterEntries, filterValues, fetchEntries);
+		return new Query<>(entityClass(), entityManager, filterEntries, filterValues, fetchEntries, sortEntries);
 	}
 
 	/**
@@ -262,8 +263,92 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 		addEntityFetch(filterName, field);
 	}
 
+	/**
+	 * Adds a sort field to the query configuration by extracting and validating the filter name
+	 * and associating it with a corresponding entity field.
+	 *
+	 * @param method the VoidFilterMethod instance representing the filter method for sorting
+	 */
+	protected final void addSortField(VoidFilterMethod<F> method) {
+		var filterName = extractFilterName(method);
+		validateSortFilterName(filterName);
+
+		var field = Character.toLowerCase(filterName.charAt(6)) + filterName.substring(7);
+		var order = SortOrder.ASC;
+
+		var orderIndex = field.lastIndexOf('_');
+		if (orderIndex > 0) {
+			var orderSuffix = field.substring(orderIndex + 1);
+			var orderFromSuffix = SortOrder.fromSuffix(orderSuffix);
+
+			if (orderFromSuffix != null) {
+				order = orderFromSuffix;
+				field = field.substring(0, orderIndex);
+			}
+		}
+
+		addSortField(filterName, field, order);
+	}
+
+	/**
+	 * Adds a sort field to the query configuration.
+	 *
+	 * @param method the VoidFilterMethod instance representing the filter method for sorting
+	 * @param field  the name of the entity property or field to be sorted
+	 */
+	protected final void addSortField(VoidFilterMethod<F> method, String field) {
+		var filterName = extractFilterName(method);
+		validateSortFilterName(filterName);
+
+		var order = SortOrder.ASC;
+		var orderIndex = filterName.lastIndexOf('_');
+		if (orderIndex > 0) {
+			var orderSuffix = filterName.substring(orderIndex + 1);
+			var orderFromSuffix = SortOrder.fromSuffix(orderSuffix);
+
+			if (orderFromSuffix != null) {
+				order = orderFromSuffix;
+			}
+		}
+
+		addSortField(filterName, field, order);
+	}
+
+	/**
+	 * Adds a sort field to the query configuration.
+	 *
+	 * @param method    the VoidFilterMethod instance representing the filter method for sorting
+	 * @param field     the name of the entity property or field to be sorted
+	 * @param sortOrder the order to sort the field (ASC or DESC)
+	 */
+	protected final void addSortField(VoidFilterMethod<F> method, String field, SortOrder sortOrder) {
+		var filterName = extractFilterName(method);
+		validateSortFilterName(filterName);
+
+		addSortField(filterName, field, sortOrder);
+	}
+
+	/**
+	 * Adds a sort field to the query configuration using a method reference that takes a SortOrder parameter.
+	 * The SortOrder parameter will be used when the query is executed.
+	 *
+	 * @param method the FilterMethod instance representing the filter method for sorting that takes a SortOrder parameter
+	 */
+	protected final void addSortField(FilterMethod<F, SortOrder> method) {
+		var filterName = extractFilterName(method);
+		validateSortFilterName(filterName);
+
+		var field = Character.toLowerCase(filterName.charAt(6)) + filterName.substring(7);
+
+		addSortField(filterName, field, SortOrder.ASC);
+	}
+
 	private void addEntityFetch(String filterName, String field) {
 		fetchEntries.put(filterName, field);
+	}
+
+	private void addSortField(String filterName, String field, SortOrder order) {
+		sortEntries.put(filterName, new SortEntry(field, order));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -288,6 +373,12 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	private void validateFetchFilterName(String filterName) {
 		if (!filterName.startsWith("fetch")) {
 			throw new IllegalArgumentException("Fetch filter name must start with 'fetch'");
+		}
+	}
+
+	private void validateSortFilterName(String filterName) {
+		if (!filterName.startsWith("sortBy")) {
+			throw new IllegalArgumentException("Sort filter name must start with 'sortBy'");
 		}
 	}
 

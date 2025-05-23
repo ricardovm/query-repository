@@ -82,4 +82,62 @@ class ProductRepositoryTest extends BaseJpaTest {
 		assertEquals(1, products.size());
 		assertEquals("Smartphone", products.get(0).getName());
 	}
+
+	@Test
+	void testSortByName() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.sortByName(SortOrder.ASC);
+		}).list();
+
+		assertEquals(5, products.size());
+		assertEquals("Headphones", products.get(0).getName());
+		assertEquals("Laptop", products.get(1).getName());
+		assertEquals("Monitor", products.get(2).getName());
+		assertEquals("Smartphone", products.get(3).getName());
+		assertEquals("Tablet", products.get(4).getName());
+	}
+
+	@Test
+	void testSortByNameDesc() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.sortByPrice_desc();
+		}).list();
+
+		assertEquals(5, products.size());
+		assertEquals("Laptop", products.get(0).getName());
+		assertEquals("Smartphone", products.get(1).getName());
+		assertEquals("Tablet", products.get(2).getName());
+		assertEquals("Monitor", products.get(3).getName());
+		assertEquals("Headphones", products.get(4).getName());
+	}
+
+	@Test
+	void testSortByNameWithSortOrder() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.sortByName(SortOrder.DESC);
+		}).list();
+
+		assertEquals(5, products.size());
+		assertEquals("Tablet", products.get(0).getName());
+		assertEquals("Smartphone", products.get(1).getName());
+		assertEquals("Monitor", products.get(2).getName());
+		assertEquals("Laptop", products.get(3).getName());
+		assertEquals("Headphones", products.get(4).getName());
+	}
+
+	@Test
+	void testSortByPriceWithFilter() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.description_like("%phone%");
+			f.sortByPrice();
+		}).list();
+
+		assertEquals(2, products.size());
+		assertEquals("Headphones", products.get(0).getName());
+		assertEquals("Smartphone", products.get(1).getName());
+	}
 }

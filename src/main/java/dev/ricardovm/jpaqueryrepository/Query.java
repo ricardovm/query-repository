@@ -27,7 +27,6 @@ import java.util.*;
  * applied to fetch entities of type {@code T}.
  *
  * @param <T> the entity type being queried.
- * @param <F> the filter type to define query conditions.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class Query<T> {
@@ -37,16 +36,18 @@ public class Query<T> {
 	private final Map<String, FilterEntry> filterEntries;
 	private final Map<String, String> fetchEntries;
 	private final Map<String, Object> filterValues;
+	private final Map<String, SortEntry> sortEntries;
 
 	private final CriteriaBuilder criteriaBuilder;
 
 	Query(Class<T> entityClass, EntityManager entityManager, Map<String, FilterEntry> filterEntries,
-	      Map<String, Object> filterValues, Map<String, String> fetchEntries) {
+	      Map<String, Object> filterValues, Map<String, String> fetchEntries, Map<String, SortEntry> sortEntries) {
 		this.entityClass = entityClass;
 		this.entityManager = entityManager;
 		this.filterEntries = filterEntries;
 		this.filterValues = filterValues;
 		this.fetchEntries = fetchEntries;
+		this.sortEntries = sortEntries;
 		this.criteriaBuilder = entityManager.getCriteriaBuilder();
 	}
 
@@ -94,6 +95,7 @@ public class Query<T> {
 
 		for (var entry : filterValues.entrySet()) {
 			if (fetchEntries.containsKey(entry.getKey())) continue;
+			if (sortEntries.containsKey(entry.getKey())) continue;
 
 			var filterEntry = filterEntries.get(entry.getKey());
 			if (filterEntry == null) {
@@ -114,6 +116,31 @@ public class Query<T> {
 		}
 
 		criteriaQuery.select(selectField).where(predicates.toArray(new Predicate[0]));
+
+		var orders = new ArrayList<Order>();
+
+		for (var entry : filterValues.entrySet()) {
+			if (!entry.getKey().startsWith("sortBy")) continue;
+
+			var sortEntry = sortEntries.get(entry.getKey());
+			if (sortEntry == null) {
+				throw new IllegalStateException("Sort entry '" + entry.getKey() + "' not found");
+			}
+
+			var path = root.get(sortEntry.field());
+
+			var sortOrder = entry.getValue() instanceof SortOrder ? (SortOrder) entry.getValue() : sortEntry.order();
+
+			if (sortOrder == SortOrder.ASC) {
+				orders.add(criteriaBuilder.asc(path));
+			} else {
+				orders.add(criteriaBuilder.desc(path));
+			}
+		}
+
+		if (!orders.isEmpty()) {
+			criteriaQuery.orderBy(orders);
+		}
 
 		return entityManager.createQuery(criteriaQuery);
 	}

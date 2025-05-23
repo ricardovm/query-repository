@@ -16,6 +16,7 @@
 package dev.ricardovm.jpaqueryrepository.domain;
 
 import dev.ricardovm.jpaqueryrepository.JpaQueryRepository;
+import dev.ricardovm.jpaqueryrepository.SortOrder;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.Root;
@@ -45,6 +46,10 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 
 			return ctx.criteriaBuilder().exists(subquery);
 		});
+
+		addSortField(Filter::sortByName);
+		addSortField(Filter::sortByPrice);
+		addSortField(Filter::sortByPrice_desc);
 	}
 
 	@Override
@@ -63,5 +68,9 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 		void description_like(String description);
 		void price_gt(BigDecimal price);
 		void orderMinimumQuantity_exists(Integer minimumQuantity);
+
+		void sortByName(SortOrder sortOrder);
+		void sortByPrice();
+		void sortByPrice_desc();
 	}
 }
