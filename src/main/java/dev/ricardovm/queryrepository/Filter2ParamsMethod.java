@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
 
 /**
  * Interface representing a method that applies a filter with two parameters.
  *
- * @param <F>  the type of the filter that implements JpaQueryRepository.Filter
+ * @param <F>  the type of the filter that implements QueryRepository.Filter
  * @param <V1> the type of the first parameter to be used with the filter
  * @param <V2> the type of the second parameter to be used with the filter
  */
-public interface Filter2ParamsMethod<F extends JpaQueryRepository.Filter, V1, V2> {
+public interface Filter2ParamsMethod<F extends QueryRepository.Filter, V1, V2> {
 
 	void accept(F filter, V1 value, V2 value2);
 }

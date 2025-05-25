@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
 
-class SortEntry {
+/**
+ * Represents a method of applying a filter to a value in the context of a
+ * defined filter and repository mechanism.
+ *
+ * @param <F> the type of the filter, extending QueryRepository.Filter
+ * @param <V> the type of the value to be filtered
+ */
+public interface FilterMethod<F extends QueryRepository.Filter, V> {
 
-    private final String field;
-    private final SortOrder order;
-
-    SortEntry(String field, SortOrder order) {
-        this.field = field;
-        this.order = order;
-    }
-
-    public String field() {
-        return field;
-    }
-
-    public SortOrder order() {
-        return order;
-    }
+	void accept(F filter, V value);
 }

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
 
 /**
  * This interface represents a method for applying a filter of type {@code F}
  * to control or modify the data retrieval process. The filter is expected
- * to be a subtype of {@link JpaQueryRepository.Filter}.
+ * to be a subtype of {@link QueryRepository.Filter}.
  *
- * @param <F> the type of filter, which must extend {@link JpaQueryRepository.Filter}
+ * @param <F> the type of filter, which must extend {@link QueryRepository.Filter}
  */
-public interface VoidFilterMethod<F extends JpaQueryRepository.Filter> {
+public interface VoidFilterMethod<F extends QueryRepository.Filter> {
 
 	void accept(F filter);
 }

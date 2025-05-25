@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
+
+import javax.persistence.criteria.Predicate;
 
 /**
- * Represents an enumeration of sort orders that can be used in query sorting.
- * Each sort order corresponds to a specific direction (ascending or descending).
+ * Represents a functional interface for defining custom operations
+ * to generate dynamic {@link Predicate} instances for queries.
+ * <p>
+ * Custom implementations of this interface are intended to provide
+ * specific behavior for constructing query predicates based on customized
+ * logic or requirements. This allows for flexible integration of
+ * non-standard query operations when building criteria-based queries.
  */
-public enum SortOrder {
-    ASC("asc"),
-    DESC("desc");
+public interface CustomOperation {
 
-    private String suffix;
-
-    SortOrder(String suffix) {
-        this.suffix = suffix;
-    }
-
-    static SortOrder fromSuffix(String suffix) {
-        for (SortOrder order : values()) {
-            if (order.suffix.equals(suffix)) {
-                return order;
-            }
-        }
-
-        return null;
-    }
+	Predicate apply(QueryContext context, Object value);
 }

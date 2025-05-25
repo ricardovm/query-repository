@@ -1,4 +1,4 @@
-# JPA Query Repository
+# Query Repository
 
 A Java library that simplifies working with JPA Criteria API by providing a fluent, type-safe interface for building and executing JPA queries.
 
@@ -20,7 +20,7 @@ Add the following dependency to your Maven project:
 ```xml
 <dependency>
     <groupId>dev.ricardovm</groupId>
-    <artifactId>jpa-query-repository</artifactId>
+    <artifactId>query-repository</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
@@ -45,10 +45,12 @@ public class Order {
 
 ### 2. Create a repository class
 
-Extend `JpaQueryRepository` with your entity type and a custom filter interface:
+Extend `QueryRepository` with your entity type and a custom filter interface:
 
 ```java
-public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.Filter> {
+import dev.ricardovm.queryrepository.QueryRepository;
+
+public class OrderRepository extends QueryRepository<Order, OrderRepository.Filter> {
 
     public OrderRepository(EntityManager em) {
         super(em);
@@ -80,15 +82,19 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
         return Filter.class;
     }
 
-    public interface Filter extends JpaQueryRepository.Filter {
+    public interface Filter extends QueryRepository.Filter {
         void status(String status);
+
         void status_in(List<String> statuses);
 
         void fetchItems();
+
         void fetchItemsProduct();
 
         void sortById();
+
         void sortByDate(SortOrder sortOrder);
+
         void sortByTotal_desc();
     }
 }
@@ -148,7 +154,7 @@ This allows you to create complex queries that go beyond the standard operations
 ### Example: Custom Operation with Subquery
 
 ```java
-public class ProductRepository extends JpaQueryRepository<Product, ProductRepository.Filter> {
+public class ProductRepository extends QueryRepository<Product, ProductRepository.Filter> {
 
     @Override
     protected void buildCriteria() {
@@ -174,7 +180,7 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
         });
     }
 
-    public interface Filter extends JpaQueryRepository.Filter {
+    public interface Filter extends QueryRepository.Filter {
         void id(Long id);
         void description_like(String description);
         void orderMinimumQuantity_exists(Integer minimumQuantity);

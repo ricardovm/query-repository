@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
 
 import javax.persistence.EntityManager;
 import java.util.LinkedHashMap;
@@ -32,9 +32,9 @@ import java.util.function.Consumer;
  * that can be configured during the buildCriteria phase and then used at query time.</p>
  *
  * @param <T> the type of the entity being queried.
- * @param <F> the type of the filter used to define query criteria, which extends {@link JpaQueryRepository.Filter}.
+ * @param <F> the type of the filter used to define query criteria, which extends {@link QueryRepository.Filter}.
  */
-public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter> {
+public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 
 	private final EntityManager entityManager;
 
@@ -43,13 +43,13 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	private final Map<String, SortEntry> sortEntries = new LinkedHashMap<>();
 
 	/**
-	 * Constructs a new JpaQueryRepository with the specified EntityManager.
+	 * Constructs a new QueryRepository with the specified EntityManager.
 	 * This constructor initializes the repository and calls {@link #buildCriteria()}
 	 * to set up the filter, fetch, and sort configurations.
 	 *
 	 * @param entityManager the JPA EntityManager to be used for query execution
 	 */
-	protected JpaQueryRepository(EntityManager entityManager) {
+	protected QueryRepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
 		buildCriteria();
 	}

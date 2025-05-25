@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
 
-import dev.ricardovm.jpaqueryrepository.domain.OrderRepository;
+import dev.ricardovm.queryrepository.domain.OrderRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

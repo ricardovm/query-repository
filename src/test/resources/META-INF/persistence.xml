@@ -8,9 +8,10 @@
     <persistence-unit name="test-persistence-unit" transaction-type="RESOURCE_LOCAL">
         <description>Persistence unit for testing with H2 database</description>
 
-        <class>dev.ricardovm.jpaqueryrepository.domain.Product</class>
-        <class>dev.ricardovm.jpaqueryrepository.domain.Order</class>
-        <class>dev.ricardovm.jpaqueryrepository.domain.OrderItem</class>
+        <class>dev.ricardovm.queryrepository.domain.Category</class>
+        <class>dev.ricardovm.queryrepository.domain.Product</class>
+        <class>dev.ricardovm.queryrepository.domain.Order</class>
+        <class>dev.ricardovm.queryrepository.domain.OrderItem</class>
 
         <properties>
             <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>

@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>dev.ricardovm</groupId>
-	<artifactId>jpa-query-repository</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
-	<name>JPA Query Repository</name>
+	<artifactId>query-repository</artifactId>
+	<version>0.1.0</version>
+	<name>Query Repository</name>
 	<description>A Java library that simplifies working with JPA Criteria API</description>
-	<url>https://github.com/ricardovm/jpa-query-repository</url>
+	<url>https://github.com/ricardovm/query-repository</url>
 
 	<licenses>
 		<license>
@@ -29,9 +29,9 @@
 	</developers>
 
 	<scm>
-		<connection>scm:git:git@github.com:ricardovm/jpa-query-repository.git</connection>
-		<developerConnection>scm:git:git@github.com:ricardovm/jpa-query-repository.git</developerConnection>
-		<url>https://github.com/ricardovm/jpa-query-repository</url>
+		<connection>scm:git:git@github.com:ricardovm/query-repository.git</connection>
+		<developerConnection>scm:git:git@github.com:ricardovm/query-repository.git</developerConnection>
+		<url>https://github.com/ricardovm/query-repository</url>
 	</scm>
 
 	<properties>
@@ -119,7 +119,7 @@
 		<repository>
 			<id>github</id>
 			<name>GitHub Packages</name>
-			<url>https://maven.pkg.github.com/ricardovm/jpa-query-repository</url>
+			<url>https://maven.pkg.github.com/ricardovm/query-repository</url>
 		</repository>
 	</distributionManagement>
 </project>

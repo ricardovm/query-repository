@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository;
+package dev.ricardovm.queryrepository;
 
 import java.lang.reflect.Proxy;
 import java.util.Map;
@@ -21,7 +21,7 @@ import java.util.Map;
 class FilterGenerator {
 
 	@SuppressWarnings("unchecked")
-	static <T extends JpaQueryRepository.Filter> T generateImplementation(Class<T> clazz) {
+	static <T extends QueryRepository.Filter> T generateImplementation(Class<T> clazz) {
 		var handler = new FilterInvocationHandler();
 
 		return (T) Proxy.newProxyInstance(

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository.domain;
+package dev.ricardovm.queryrepository.domain;
 
 import javax.persistence.*;
 import java.math.BigDecimal;

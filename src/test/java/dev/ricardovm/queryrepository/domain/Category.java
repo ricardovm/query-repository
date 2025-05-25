@@ -1,4 +1,4 @@
-package dev.ricardovm.jpaqueryrepository.domain;
+package dev.ricardovm.queryrepository.domain;
 
 import javax.persistence.*;
 

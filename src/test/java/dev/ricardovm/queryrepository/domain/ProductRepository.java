@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ricardovm.jpaqueryrepository.domain;
+package dev.ricardovm.queryrepository.domain;
 
-import dev.ricardovm.jpaqueryrepository.JpaQueryRepository;
-import dev.ricardovm.jpaqueryrepository.SortOrder;
+import dev.ricardovm.queryrepository.QueryRepository;
+import dev.ricardovm.queryrepository.SortOrder;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.math.BigDecimal;
 
-public class ProductRepository extends JpaQueryRepository<Product, ProductRepository.Filter> {
+public class ProductRepository extends QueryRepository<Product, ProductRepository.Filter> {
 
 	public ProductRepository(EntityManager em) {
 		super(em);
@@ -64,7 +64,7 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 		return Filter.class;
 	}
 
-	public interface Filter extends JpaQueryRepository.Filter {
+	public interface Filter extends QueryRepository.Filter {
 
 		void id(Long id);
 		void description_like(String description);

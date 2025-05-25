@@ -1,11 +1,11 @@
-package dev.ricardovm.jpaqueryrepository.domain;
+package dev.ricardovm.queryrepository.domain;
 
-import dev.ricardovm.jpaqueryrepository.JpaQueryRepository;
+import dev.ricardovm.queryrepository.QueryRepository;
 
 import javax.persistence.EntityManager;
 import java.util.List;
 
-public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.Filter> {
+public class OrderRepository extends QueryRepository<Order, OrderRepository.Filter> {
 
 	public OrderRepository(EntityManager em) {
 		super(em);
@@ -30,7 +30,7 @@ public class OrderRepository extends JpaQueryRepository<Order, OrderRepository.F
 		return Filter.class;
 	}
 
-	public interface Filter extends JpaQueryRepository.Filter {
+	public interface Filter extends QueryRepository.Filter {
 		void status(String status);
 		void status_in(List<String> statuses);
 
