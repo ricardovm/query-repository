@@ -2,6 +2,8 @@
 
 A Java library that simplifies working with JPA Criteria API by providing a fluent, type-safe interface for building and executing JPA queries.
 
+This is still a work in progress, but this release is already usable and provides a good starting point for building JPA repositories with a focus on type safety and ease of use.
+
 ## Features
 
 - Type-safe query building with method references
