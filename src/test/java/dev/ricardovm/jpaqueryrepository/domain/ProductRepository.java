@@ -33,6 +33,7 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 	protected void buildCriteria() {
 		addFilter(Filter::id);
 		addFilter(Filter::description_like);
+		addFilter(Filter::categoryName, "category.name");
 		addFilter(Filter::price_gt);
 		addFilter(Filter::orderMinimumQuantity_exists, (ctx, value) -> {
 			var minimumQuantity = (Integer) value;
@@ -66,6 +67,7 @@ public class ProductRepository extends JpaQueryRepository<Product, ProductReposi
 
 		void id(Long id);
 		void description_like(String description);
+		void categoryName(String categoryName);
 		void price_gt(BigDecimal price);
 		void orderMinimumQuantity_exists(Integer minimumQuantity);
 
