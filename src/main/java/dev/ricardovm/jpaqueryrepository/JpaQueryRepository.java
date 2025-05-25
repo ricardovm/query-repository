@@ -113,7 +113,9 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 */
 	protected final <V> void addFilter(FilterMethod<F, V> method) {
 		var filterName = extractFilterName(method);
-		addFilter(method, filterName);
+		var field = extractFieldName(filterName);
+		var operation = extractOperation(filterName);
+		addFilter(filterName, field, operation);
 	}
 
 	/**
@@ -124,26 +126,12 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 * @param <V>        the type of the value associated with the filter method.
 	 * @param method     the filter method used to define the filter criteria. It specifies how the filter
 	 *                   instance and value should be processed.
-	 * @param filterName the name of the filter criteria for which the filter is being applied. This is usually
-	 *                   the field name, optionally with an operation suffix (e.g., `field_gt`).
+	 * @param field      the actual name of the field in the entity to which the filter will be applied.
 	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method, String filterName) {
-		var operationIndex = filterName.lastIndexOf('_');
-
-		var field = filterName;
-		var operation = Operation.EQUALS;
-
-		if (operationIndex > 0) {
-			var operationSuffix = filterName.substring(operationIndex + 1);
-			var operationFromSuffix = Operation.fromSuffix(operationSuffix);
-
-			if (operationFromSuffix != null) {
-				operation = operationFromSuffix;
-				field = filterName.substring(0, operationIndex);
-			}
-		}
-
-		addFilter(method, filterName, field, operation);
+	protected final <V> void addFilter(FilterMethod<F, V> method, String field) {
+		var filterName = extractFilterName(method);
+		var operation = extractOperation(filterName);
+		addFilter(filterName, field, operation);
 	}
 
 	/**
@@ -153,14 +141,28 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 * @param <V>        the type of the value associated with the filter method.
 	 * @param method     the filter method used to define the filter criteria. This method specifies
 	 *                   how the filter instance and value should be processed.
-	 * @param filterName the name of the filter criteria for which the filter is being applied. This is usually
-	 *                   the field name, optionally with an operation suffix (e.g., `field_gt`).
 	 * @param field      the actual name of the field in the entity to which the filter will be applied.
 	 * @param operation  the operation that defines the type of filter to apply
 	 *                   (e.g., equals, greater than, less than, etc.).
 	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method, String filterName, String field, Operation operation) {
-		filterEntries.put(filterName, new FilterEntry(field, operation));
+	protected final <V> void addFilter(FilterMethod<F, V> method, String field, Operation operation) {
+		var filterName = extractFilterName(method);
+		addFilter(filterName, field, operation);
+	}
+
+	/**
+	 * Adds a filter to the query configuration by generating an implementation of the filter type
+	 * and applying the specified filter method. This method extracts the field and filter operation
+	 * from the generated filter instance and associates the filter method with the corresponding field.
+	 *
+	 * @param method the filter method to define the filter criteria. It accepts a filter instance
+	 *               and enables the customization of filter logic for the query.
+	 */
+	protected final void addFilter(VoidFilterMethod<F> method) {
+		var filterName = extractFilterName(method);
+		var field = extractFieldName(filterName);
+		var operation = extractOperation(filterName);
+		addFilter(filterName, field, operation);
 	}
 
 	/**
@@ -177,37 +179,7 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 */
 	protected final <V> void addFilter(FilterMethod<F, V> method, CustomOperation customOperation) {
 		var filterName = extractFilterName(method);
-		addFilter(method, filterName, customOperation);
-	}
-
-	/**
-	 * Adds a filter to the query configuration. This method integrates the provided filter method,
-	 * filterName name, and custom operation to define filtering criteria used in query execution.
-	 *
-	 * @param <V>             the type of the value associated with the filter method.
-	 * @param method          the filter method used to define the filter criteria.
-	 *                        This method specifies how the filter instance and value should be processed.
-	 * @param filterName      the name of the filter criteria for which the filter is being applied. This is usually
-	 *                        the field name, optionally with an operation suffix (e.g., `field_gt`).
-	 * @param customOperation the custom operation that defines the type of filter to apply.
-	 *                        It allows custom logic for filtering based on the context and value.
-	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method, String filterName, CustomOperation customOperation) {
-		System.out.printf("Adding filter: %s%n", filterName);
-		filterEntries.put(filterName, new FilterEntry(filterName, customOperation));
-	}
-
-	/**
-	 * Adds a filter to the query configuration by generating an implementation of the filter type
-	 * and applying the specified filter method. This method extracts the field and filter operation
-	 * from the generated filter instance and associates the filter method with the corresponding field.
-	 *
-	 * @param method the filter method to define the filter criteria. It accepts a filter instance
-	 *               and enables the customization of filter logic for the query.
-	 */
-	protected final void addFilter(VoidFilterMethod<F> method) {
-		var filterName = extractFilterName(method);
-		addFilter((F o, Boolean v) -> method.accept(o), filterName);
+		addFilter(filterName, customOperation);
 	}
 
 	/**
@@ -223,10 +195,8 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	 *                        filtering logic based on context and value.
 	 */
 	protected final <V1, V2> void addFilter(Filter2ParamsMethod<F, V1, V2> method, CustomOperation customOperation) {
-		var filter = FilterGenerator.generateImplementation(filterClass());
 		var filterName = extractFilterName(method);
-
-		addFilter((F o, Object[] v) -> method.accept(filter, (V1) v[0], (V2) v[1]), filterName, customOperation);
+		addFilter(filterName, customOperation);
 	}
 
 	/**
@@ -341,6 +311,48 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 		var field = Character.toLowerCase(filterName.charAt(6)) + filterName.substring(7);
 
 		addSortField(filterName, field, SortOrder.ASC);
+	}
+
+	private void addFilter(String filterName, String field, Operation operation) {
+		filterEntries.put(filterName, new FilterEntry(field, operation));
+	}
+
+	private void addFilter(String filterName, CustomOperation customOperation) {
+		filterEntries.put(filterName, new FilterEntry(filterName, customOperation));
+	}
+
+	private String extractFieldName(String filterName) {
+		var operationIndex = filterName.lastIndexOf('_');
+
+		if (operationIndex < 0) {
+			return filterName;
+		}
+
+		var operationSuffix = filterName.substring(operationIndex + 1);
+		var operation = Operation.fromSuffix(operationSuffix);
+
+		if (operation != null) {
+			return filterName.substring(0, operationIndex);
+		}
+
+		return filterName;
+	}
+
+	private Operation extractOperation(String filterName) {
+		var operationIndex = filterName.lastIndexOf('_');
+
+		if (operationIndex < 0) {
+			return Operation.EQUALS;
+		}
+
+		var operationSuffix = filterName.substring(operationIndex + 1);
+		var operation = Operation.fromSuffix(operationSuffix);
+
+		if (operation != null) {
+			return operation;
+		}
+
+		return Operation.EQUALS;
 	}
 
 	private void addEntityFetch(String filterName, String field) {
