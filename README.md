@@ -103,7 +103,7 @@ List<Order> orders = orderRepository.query(f -> {
     f.status_in(List.of("SHIPPED", "COMPLETED"));
     f.fetchItems();
     f.fetchItemsProduct();
-    f.sortByPrice_desc();
+    f.sortByTotal_desc();
 }).list();
 
 // Or get a single result
