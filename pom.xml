@@ -17,6 +17,14 @@
 		</license>
 	</licenses>
 
+	<developers>
+		<developer>
+			<id>ricardovm</id>
+			<name>Ricardo Vaz Mannrich</name>
+			<email>ricardovm@ricardovm.dev</email>
+		</developer>
+	</developers>
+
 	<scm>
 		<connection>scm:git:git@github.com:ricardovm/jpa-query-repository.git</connection>
 		<developerConnection>scm:git:git@github.com:ricardovm/jpa-query-repository.git</developerConnection>
