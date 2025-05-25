@@ -22,6 +22,14 @@ import java.util.function.Consumer;
 
 /**
  * Abstract class providing a framework for repositories using JPA to handle query building with dynamic filters.
+ * This class simplifies the creation of type-safe, flexible queries by allowing the definition of filter criteria
+ * through a strongly-typed filter interface.
+ *
+ * <p>Subclasses must implement {@link #buildCriteria()} to define the available filter operations,
+ * {@link #entityClass()} to specify the entity type, and {@link #filterClass()} to specify the filter interface type.</p>
+ *
+ * <p>The repository supports various filter operations, entity fetching, and sorting capabilities
+ * that can be configured during the buildCriteria phase and then used at query time.</p>
  *
  * @param <T> the type of the entity being queried.
  * @param <F> the type of the filter used to define query criteria, which extends {@link JpaQueryRepository.Filter}.
@@ -34,6 +42,13 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	private final Map<String, String> fetchEntries = new LinkedHashMap<>();
 	private final Map<String, SortEntry> sortEntries = new LinkedHashMap<>();
 
+	/**
+	 * Constructs a new JpaQueryRepository with the specified EntityManager.
+	 * This constructor initializes the repository and calls {@link #buildCriteria()}
+	 * to set up the filter, fetch, and sort configurations.
+	 *
+	 * @param entityManager the JPA EntityManager to be used for query execution
+	 */
 	protected JpaQueryRepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
 		buildCriteria();
@@ -41,14 +56,37 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 
 	/**
 	 * Constructs and executes a query using the provided filter configuration.
-	 * The filter is defined by consuming an instance of the filter type {@code F}.
+	 * This method provides a convenient way to define filter criteria using a lambda expression
+	 * that configures a filter instance.
+	 *
+	 * <p>Example usage:</p>
+	 * <pre>{@code
+	 * // Find products with price > 100 and sort by name
+	 * List<Product> expensiveProducts = productRepository.query(filter -> filter
+	 *     .price_gt(new BigDecimal("100.00"))
+	 *     .sortByName()
+	 * ).getResultList();
+	 *
+	 * // Find products in specific categories with optional name filter
+	 * String nameFilter = getOptionalNameFilter(); // may be null
+	 * List<Product> filteredProducts = productRepository.query(filter -> {
+	 *     filter.category_in(Arrays.asList("Electronics", "Gadgets"));
+	 *
+	 *     if (nameFilter != null && !nameFilter.isEmpty()) {
+	 *         filter.name_like("%" + nameFilter + "%");
+	 *     }
+	 *
+	 *     filter.sortByPrice_desc();
+	 * }).getResultList();
+	 * }</pre>
 	 *
 	 * @param filter a consumer that defines the filter configuration for the query.
 	 *               This consumer accepts an instance of {@code F}, which is used to
 	 *               specify the query's filter criteria based on field values and operations.
 	 * @return a {@link Query} instance representing the query built with the specified filter criteria.
-	 * The resulting {@link Query} can be further used to retrieve query results,
-	 * such as a list of entities or a single entity.
+	 *         The resulting {@link Query} can be further used to retrieve query results,
+	 *         such as a list of entities or a single entity.
+	 * @see #query(Filter)
 	 */
 	public final Query<T> query(Consumer<F> filter) {
 		F filterImpl = createFilter();
@@ -60,20 +98,18 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	/**
 	 * Constructs and executes a query using the provided filter criteria.
 	 * The filter is applied by processing the specified instance of the filter type {@code F}.
+	 * This method extracts values from the filter instance and uses them to build a query
+	 * based on the filter entries, fetch entries, and sort entries configured in this repository.
 	 *
 	 * @param filter an instance of {@code F} that defines the filter criteria
 	 *               used to customize the query. The filter should specify
 	 *               the field values and operations for the query's conditions.
 	 * @return a {@code Query<T>} instance representing the constructed query.
-	 * The returned {@code Query} can be used to retrieve results,
-	 * such as a list or a single entity, based on the filter criteria.
+	 *         The returned {@code Query} can be used to retrieve results,
+	 *         such as a list or a single entity, based on the filter criteria.
 	 */
 	public final Query<T> query(F filter) {
 		var filterValues = FilterGenerator.values(filter);
-		filterValues.forEach((key, value) -> {
-			System.out.printf("Filter key: %s, value: %s%n", key, value);
-		});
-
 		return new Query<>(entityClass(), entityManager, filterEntries, filterValues, fetchEntries, sortEntries);
 	}
 
@@ -90,15 +126,31 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 	}
 
 	/**
-	 * Defines an abstract method to construct the criteria for a query.
-	 * This method is intended to be implemented by subclasses to specify
-	 * the exact criteria logic used in query construction. The implementation
-	 * should configure predicates and filtering conditions based on the
-	 * query context and specified filter configurations.
-	 * <p>
-	 * Subclasses implementing this method are expected to interact with
-	 * query utilities such as CriteriaBuilder, CriteriaQuery, and other
-	 * related components to build the appropriate query criteria.
+	 * Defines an abstract method to configure the query criteria for this repository.
+	 * This method is called during repository initialization and must be implemented by subclasses
+	 * to define all available filter operations, entity fetches, and sort fields.
+	 *
+	 * <p>Implementation should use the various addFilter, addEntityFetch, and addSortField methods
+	 * to register all supported query operations. For example:</p>
+	 *
+	 * <pre>{@code
+	 * protected void buildCriteria() {
+	 *     // Add filters for various fields
+	 *     addFilter(Filter::name);
+	 *     addFilter(Filter::price_gt);
+	 *     addFilter(Filter::category, "category.name");
+	 *
+	 *     // Add entity fetches
+	 *     addEntityFetch(Filter::fetchCategory);
+	 *
+	 *     // Add sort fields
+	 *     addSortField(Filter::sortByName);
+	 *     addSortField(Filter::sortByPrice_desc);
+	 * }
+	 * }</pre>
+	 *
+	 * <p>The configured criteria will be used when constructing queries via the {@link #query(Consumer)}
+	 * or {@link #query(Filter)} methods.</p>
 	 */
 	protected abstract void buildCriteria();
 
@@ -396,28 +448,31 @@ public abstract class JpaQueryRepository<T, F extends JpaQueryRepository.Filter>
 
 	/**
 	 * Retrieves the class type of the entity represented by this repository.
+	 * This method is used internally to create and execute queries against the correct entity type.
+	 * Implementations should return the concrete entity class that this repository manages.
 	 *
 	 * @return the {@code Class} object of the entity type {@code T}.
 	 */
 	protected abstract Class<T> entityClass();
 
 	/**
-	 * Retrieves the class type of the filter used by this repository.
+	 * Retrieves the class type of the filter interface used by this repository.
+	 * This method is used internally to create dynamic implementations of the filter interface
+	 * when building queries. Implementations should return the interface type that extends
+	 * {@link Filter} and defines the filtering methods for this repository.
 	 *
-	 * @return the {@code Class} object of the filter type {@code F}.
+	 * <p>The filter interface should be defined as an inner interface or a separate interface
+	 * that extends {@link Filter} and declares methods for all supported filter operations.</p>
+	 *
+	 * @return the {@code Class} object of the filter interface type {@code F}.
+	 * @see Filter
 	 */
 	protected abstract Class<F> filterClass();
 
 	/**
 	 * Represents a contract for defining filter behavior within the repository query system.
-	 * Implementations of this interface are responsible for configuring filtering criteria
-	 * through defined methods. These criteria are used during query construction to filter
-	 * database results based on specific conditions.
-	 * <p>
-	 * The `Filter` interface allows dynamic and extensible filter configurations, making
-	 * it adaptable to various query requirements. Methods defined in implementations of
-	 * this interface are typically used to specify filter criteria such as field values,
-	 * ranges, or existence checks.
+	 * This interface serves as a marker for filter types and should be extended by repository-specific
+	 * filter interfaces that declare methods for each supported filter operation.
 	 */
 	protected interface Filter {
 	}
