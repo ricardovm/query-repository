@@ -1,6 +1,6 @@
 # JPA Query Repository
 
-A lightweight Java library that simplifies working with JPA Criteria API by providing a fluent, type-safe interface for building and executing JPA queries.
+A Java library that simplifies working with JPA Criteria API by providing a fluent, type-safe interface for building and executing JPA queries.
 
 ## Features
 
@@ -19,7 +19,7 @@ Add the following dependency to your Maven project:
 <dependency>
     <groupId>dev.ricardovm</groupId>
     <artifactId>jpa-query-repository</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
