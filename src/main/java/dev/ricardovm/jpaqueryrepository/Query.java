@@ -37,6 +37,7 @@ public class Query<T> {
 	private final Map<String, String> fetchEntries;
 	private final Map<String, Object> filterValues;
 	private final Map<String, SortEntry> sortEntries;
+	private final Map<String, Join> joins = new HashMap<>();
 
 	private final CriteriaBuilder criteriaBuilder;
 
@@ -170,7 +171,22 @@ public class Query<T> {
 	}
 
 	private Predicate createOperationPredicate(Root<T> root, FilterEntry filterEntry, Object value) {
-		Expression predicateField = root.get(filterEntry.field());
+		Expression predicateField;
+		String field = filterEntry.field();
+
+		if (field.contains(".")) {
+			String[] parts = field.split("\\.");
+			From<?, ?> from = root;
+
+			for (int i = 0; i < parts.length - 1; i++) {
+				String joinPath = String.join(".", java.util.Arrays.copyOfRange(parts, 0, i + 1));
+				from = getOrCreateJoin(from, parts[i], joinPath);
+			}
+
+			predicateField = from.get(parts[parts.length - 1]);
+		} else {
+			predicateField = root.get(field);
+		}
 
 		switch (filterEntry.operation()) {
 			case EQUALS:
@@ -210,5 +226,14 @@ public class Query<T> {
 
 		var queryContext = new QueryContext(criteriaBuilder, criteriaQuery, root);
 		return filterEntry.customOperation().apply(queryContext, value);
+	}
+
+	private Join<?, ?> getOrCreateJoin(From<?, ?> from, String attribute, String joinPath) {
+		Join<?, ?> join = joins.get(joinPath);
+		if (join == null) {
+			join = from.join(attribute, JoinType.INNER);
+			joins.put(joinPath, join);
+		}
+		return join;
 	}
 }
