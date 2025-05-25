@@ -84,6 +84,20 @@ class ProductRepositoryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testFilterWithJoin() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.categoryName("Electronics");
+			f.sortById();
+		}).list();
+
+		assertEquals(3, products.size());
+		assertEquals("Laptop", products.get(0).getName());
+		assertEquals("Smartphone", products.get(1).getName());
+		assertEquals("Monitor", products.get(2).getName());
+	}
+
+	@Test
 	void testSortByName() {
 		var productRepository = new ProductRepository(em);
 		var products = productRepository.query(f -> {
