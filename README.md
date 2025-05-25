@@ -188,6 +188,10 @@ List<Product> products = productRepository.query(f -> {
 
 This example demonstrates a custom operation that uses a subquery to find products that have been ordered with a quantity greater than or equal to a specified minimum value.
 
+## Known Limitations
+
+- It's not possible to use primitive parameters in filter methods. Always use their wrapper classes (e.g., `Integer` instead of `int`, `Long` instead of `long`).
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
