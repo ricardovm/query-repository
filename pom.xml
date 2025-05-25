@@ -6,7 +6,7 @@
 
 	<groupId>dev.ricardovm</groupId>
 	<artifactId>jpa-query-repository</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 
 	<licenses>
 		<license>
