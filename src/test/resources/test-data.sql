@@ -1,8 +1,12 @@
-INSERT INTO products (id, name, description, price) VALUES (1, 'Laptop', 'High-performance laptop', 1299.99);
-INSERT INTO products (id, name, description, price) VALUES (2, 'Smartphone', 'Latest smartphone model', 799.99);
-INSERT INTO products (id, name, description, price) VALUES (3, 'Headphones', 'Noise-cancelling headphones', 199.99);
-INSERT INTO products (id, name, description, price) VALUES (4, 'Tablet', '10-inch tablet', 499.99);
-INSERT INTO products (id, name, description, price) VALUES (5, 'Monitor', '27-inch 4K monitor', 349.99);
+INSERT INTO categories (id, name) VALUES (1, 'Electronics');
+INSERT INTO categories (id, name) VALUES (2, 'Accessories');
+INSERT INTO categories (id, name) VALUES (3, 'Tablets');
+
+INSERT INTO products (id, name, description, price, category_id) VALUES (1, 'Laptop', 'High-performance laptop', 1299.99, 1);
+INSERT INTO products (id, name, description, price, category_id) VALUES (2, 'Smartphone', 'Latest smartphone model', 799.99, 1);
+INSERT INTO products (id, name, description, price, category_id) VALUES (3, 'Headphones', 'Noise-cancelling headphones', 199.99, 2);
+INSERT INTO products (id, name, description, price, category_id) VALUES (4, 'Tablet', '10-inch tablet', 499.99, 3);
+INSERT INTO products (id, name, description, price, category_id) VALUES (5, 'Monitor', '27-inch 4K monitor', 349.99, 1);
 
 INSERT INTO orders (id, customerName, orderDate, status) VALUES (1, 'John Doe', '2023-01-15 10:30:00', 'COMPLETED');
 INSERT INTO orders (id, customerName, orderDate, status) VALUES (2, 'Jane Smith', '2023-02-20 14:45:00', 'PROCESSING');

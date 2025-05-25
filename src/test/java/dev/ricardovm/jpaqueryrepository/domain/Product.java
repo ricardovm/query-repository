@@ -27,15 +27,21 @@ public class Product {
 	private Long id;
 
 	private String name;
+
 	private String description;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Category category;
+
 	private BigDecimal price;
 
 	public Product() {
 	}
 
-	public Product(String name, String description, BigDecimal price) {
+	public Product(String name, String description, Category category, BigDecimal price) {
 		this.name = name;
 		this.description = description;
+		this.category = category;
 		this.price = price;
 	}
 
@@ -63,6 +69,14 @@ public class Product {
 		this.description = description;
 	}
 
+	public Category getCategory() {
+		return category;
+	}
+
+	public void setCategory(Category category) {
+		this.category = category;
+	}
+
 	public BigDecimal getPrice() {
 		return price;
 	}
@@ -76,6 +90,7 @@ public class Product {
 		return "Product{" +
 			"id=" + id +
 			", name='" + name + '\'' +
+			", category='" + category + '\'' +
 			", description='" + description + '\'' +
 			", price=" + price +
 			'}';
