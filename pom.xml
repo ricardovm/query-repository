@@ -17,6 +17,12 @@
 		</license>
 	</licenses>
 
+	<scm>
+		<connection>scm:git:git@github.com:ricardovm/jpa-query-repository.git</connection>
+		<developerConnection>scm:git:git@github.com:ricardovm/jpa-query-repository.git</developerConnection>
+		<url>https://github.com/ricardovm/jpa-query-repository</url>
+	</scm>
+
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
