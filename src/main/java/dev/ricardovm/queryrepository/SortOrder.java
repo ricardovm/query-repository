@@ -20,22 +20,22 @@ package dev.ricardovm.queryrepository;
  * Each sort order corresponds to a specific direction (ascending or descending).
  */
 public enum SortOrder {
-    ASC("asc"),
-    DESC("desc");
+	ASC("asc"),
+	DESC("desc");
 
-    private String suffix;
+	private String suffix;
 
-    SortOrder(String suffix) {
-        this.suffix = suffix;
-    }
+	SortOrder(String suffix) {
+		this.suffix = suffix;
+	}
 
-    static SortOrder fromSuffix(String suffix) {
-        for (SortOrder order : values()) {
-            if (order.suffix.equals(suffix)) {
-                return order;
-            }
-        }
+	static SortOrder fromSuffix(String suffix) {
+		for (SortOrder order : values()) {
+			if (order.suffix.equals(suffix)) {
+				return order;
+			}
+		}
 
-        return null;
-    }
+		return null;
+	}
 }

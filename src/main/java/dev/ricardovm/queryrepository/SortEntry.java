@@ -17,19 +17,19 @@ package dev.ricardovm.queryrepository;
 
 class SortEntry {
 
-    private final String field;
-    private final SortOrder order;
+	private final String field;
+	private final SortOrder order;
 
-    SortEntry(String field, SortOrder order) {
-        this.field = field;
-        this.order = order;
-    }
+	SortEntry(String field, SortOrder order) {
+		this.field = field;
+		this.order = order;
+	}
 
-    public String field() {
-        return field;
-    }
+	public String field() {
+		return field;
+	}
 
-    public SortOrder order() {
-        return order;
-    }
+	public SortOrder order() {
+		return order;
+	}
 }
