@@ -199,6 +199,7 @@ This example demonstrates a custom operation that uses a subquery to find produc
 ## Known Limitations
 
 - It's not possible to use primitive parameters in filter methods. Always use their wrapper classes (e.g., `Integer` instead of `int`, `Long` instead of `long`).
+- No support for `@ElementCollection` or `@ManyToMany` relationships yet.
 
 ## License
 
