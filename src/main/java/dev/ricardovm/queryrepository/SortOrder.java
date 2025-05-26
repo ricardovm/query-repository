@@ -23,7 +23,7 @@ public enum SortOrder {
 	ASC("asc"),
 	DESC("desc");
 
-	private String suffix;
+	private final String suffix;
 
 	SortOrder(String suffix) {
 		this.suffix = suffix;
