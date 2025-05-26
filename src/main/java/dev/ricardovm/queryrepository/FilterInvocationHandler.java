@@ -39,7 +39,7 @@ class FilterInvocationHandler implements InvocationHandler {
 			if (args != null && args.length == 1) {
 				value = args[0];
 			} else if (args != null && args.length > 1) {
-				value = Arrays.asList(args);
+				value = args;
 			} else {
 				value = true;
 			}

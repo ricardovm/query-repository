@@ -84,6 +84,17 @@ class ProductRepositoryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testOrderQuantityAndPriceExists() {
+		var productRepository = new ProductRepository(em);
+		var products = productRepository.query(f -> {
+			f.orderQuantityAndUnitPrice_exists(2, new BigDecimal("349.99"));
+		}).list();
+
+		assertEquals(1, products.size());
+		assertEquals("Monitor", products.get(0).getName());
+	}
+
+	@Test
 	void testFilterWithJoin() {
 		var productRepository = new ProductRepository(em);
 		var products = productRepository.query(f -> {

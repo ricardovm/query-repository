@@ -47,6 +47,21 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 
 			return ctx.criteriaBuilder().exists(subquery);
 		});
+		addFilter(Filter::orderQuantityAndUnitPrice_exists, (ctx, value) -> {
+			var params = (Object[]) value;
+			var quantity = (Integer) params[0];
+			var price = (BigDecimal) params[1];
+
+			Subquery<Integer> subquery = ctx.criteriaQuery().subquery(Integer.class);
+			Root<OrderItem> subRoot = subquery.from(OrderItem.class);
+
+			subquery.select(ctx.criteriaBuilder().literal(1))
+				.where(ctx.criteriaBuilder().equal(subRoot.get("product"), ctx.root()),
+					ctx.criteriaBuilder().equal(subRoot.get("quantity"), quantity),
+					ctx.criteriaBuilder().equal(subRoot.get("unitPrice"), price));
+
+			return ctx.criteriaBuilder().exists(subquery);
+		});
 
 		addSortField(Filter::sortById);
 		addSortField(Filter::sortByName);
@@ -71,6 +86,7 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 		void categoryName(String categoryName);
 		void price_gt(BigDecimal price);
 		void orderMinimumQuantity_exists(Integer minimumQuantity);
+		void orderQuantityAndUnitPrice_exists(Integer minimumQuantity, BigDecimal price);
 
 		void sortById();
 		void sortByName(SortOrder sortOrder);
