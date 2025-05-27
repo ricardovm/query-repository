@@ -16,13 +16,13 @@
 package dev.ricardovm.queryrepository;
 
 /**
- * Interface representing a method that applies a filter with two parameters.
+ * Represents a method of applying a quary parameter to a value in the context of a
+ * defined query and repository mechanism.
  *
- * @param <F>  the type of the filter that implements QueryRepository.Filter
- * @param <V1> the type of the first parameter to be used with the filter
- * @param <V2> the type of the second parameter to be used with the filter
+ * @param <P> the type of the params, extending QueryRepository.Params
+ * @param <V> the type of the value to be filtered
  */
-public interface Filter2ParamsMethod<F extends QueryRepository.Filter, V1, V2> {
+public interface ParamMethod<P extends QueryRepository.Params, V> {
 
-	void accept(F filter, V1 value, V2 value2);
+	void accept(P params, V value);
 }

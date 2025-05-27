@@ -21,20 +21,22 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Abstract class providing a framework for repositories using JPA to handle query building with dynamic filters.
- * This class simplifies the creation of type-safe, flexible queries by allowing the definition of filter criteria
- * through a strongly-typed filter interface.
+ * Abstract class providing a framework for repositories using JPA to handle query building with dynamic filters and
+ * parameters.
  *
- * <p>Subclasses must implement {@link #buildCriteria()} to define the available filter operations,
- * {@link #entityClass()} to specify the entity type, and {@link #filterClass()} to specify the filter interface type.</p>
+ * <p>This class simplifies the creation of type-safe, flexible queries by allowing the definition of filter criteria
+ * through a strongly-typed params interface.</p>
+ *
+ * <p>Subclasses must implement {@link #buildCriteria()} to define the available operations,
+ * {@link #entityClass()} to specify the entity type, and {@link #queryParamClass()} to specify the params interface type.</p>
  *
  * <p>The repository supports various filter operations, entity fetching, and sorting capabilities
  * that can be configured during the buildCriteria phase and then used at query time.</p>
  *
  * @param <T> the type of the entity being queried.
- * @param <F> the type of the filter used to define query criteria, which extends {@link QueryRepository.Filter}.
+ * @param <P> the type of the params used to define query criteria, which extends {@link Params}.
  */
-public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
+public abstract class QueryRepository<T, P extends QueryRepository.Params> {
 
 	private final EntityManager entityManager;
 
@@ -55,74 +57,45 @@ public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 	}
 
 	/**
-	 * Constructs and executes a query using the provided filter configuration.
-	 * This method provides a convenient way to define filter criteria using a lambda expression
-	 * that configures a filter instance.
+	 * Constructs and executes a query using the provided configuration.
+	 * This method provides a convenient way to define filter criteria and other operations using a lambda
+	 * expression that configures a params instance.
 	 *
 	 * <p>Example usage:</p>
 	 * <pre>{@code
 	 * // Find products with price > 100 and sort by name
-	 * List<Product> expensiveProducts = productRepository.query(filter -> filter
-	 *     .price_gt(new BigDecimal("100.00"))
-	 *     .sortByName()
-	 * ).getResultList();
+	 * List<Product> expensiveProducts = productRepository.query(q -> q
+	 *     q.price_gt(new BigDecimal("100.00"));
+	 *     q.sortByName();
+	 * ).list();
 	 *
 	 * // Find products in specific categories with optional name filter
 	 * String nameFilter = getOptionalNameFilter(); // may be null
-	 * List<Product> filteredProducts = productRepository.query(filter -> {
-	 *     filter.category_in(Arrays.asList("Electronics", "Gadgets"));
+	 * List<Product> filteredProducts = productRepository.query(q -> {
+	 *     q.category_in("Electronics", "Gadgets");
 	 *
 	 *     if (nameFilter != null && !nameFilter.isEmpty()) {
-	 *         filter.name_like("%" + nameFilter + "%");
+	 *         q.name_like("%" + nameFilter + "%");
 	 *     }
 	 *
-	 *     filter.sortByPrice_desc();
-	 * }).getResultList();
+	 *     q.sortByPrice_desc();
+	 * }).list();
 	 * }</pre>
 	 *
-	 * @param filter a consumer that defines the filter configuration for the query.
+	 * @param query a consumer that defines the configuration for the query.
 	 *               This consumer accepts an instance of {@code F}, which is used to
-	 *               specify the query's filter criteria based on field values and operations.
+	 *               specify the query's filter criteria based on field values and operations, inclunding fetch
+	 *               and sort configurations. .
 	 * @return a {@link Query} instance representing the query built with the specified filter criteria.
 	 *         The resulting {@link Query} can be further used to retrieve query results,
 	 *         such as a list of entities or a single entity.
-	 * @see #query(Filter)
 	 */
-	public final Query<T> query(Consumer<F> filter) {
-		F filterImpl = createFilter();
-		filter.accept(filterImpl);
+	public final Query<T> query(Consumer<P> query) {
+		P paramsImpl = ParamsGenerator.generateImplementation(queryParamClass());
+		query.accept(paramsImpl);
+		var paramsValues = ParamsGenerator.values(paramsImpl);
 
-		return query(filterImpl);
-	}
-
-	/**
-	 * Constructs and executes a query using the provided filter criteria.
-	 * The filter is applied by processing the specified instance of the filter type {@code F}.
-	 * This method extracts values from the filter instance and uses them to build a query
-	 * based on the filter entries, fetch entries, and sort entries configured in this repository.
-	 *
-	 * @param filter an instance of {@code F} that defines the filter criteria
-	 *               used to customize the query. The filter should specify
-	 *               the field values and operations for the query's conditions.
-	 * @return a {@code Query<T>} instance representing the constructed query.
-	 *         The returned {@code Query} can be used to retrieve results,
-	 *         such as a list or a single entity, based on the filter criteria.
-	 */
-	public final Query<T> query(F filter) {
-		var filterValues = FilterGenerator.values(filter);
-		return new Query<>(entityClass(), entityManager, filterEntries, filterValues, fetchEntries, sortEntries);
-	}
-
-	/**
-	 * Creates and returns an instance of the filter type {@code F}.
-	 * The filter instance is generated dynamically and is used to define
-	 * query filter criteria through its configurable fields and methods.
-	 *
-	 * @return a dynamically generated implementation of the filter type {@code F}.
-	 * This instance provides methods to specify filter conditions for building queries.
-	 */
-	public F createFilter() {
-		return FilterGenerator.generateImplementation(filterClass());
+		return new Query<>(entityClass(), entityManager, filterEntries, paramsValues, fetchEntries, sortEntries);
 	}
 
 	/**
@@ -136,166 +109,153 @@ public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 	 * <pre>{@code
 	 * protected void buildCriteria() {
 	 *     // Add filters for various fields
-	 *     addFilter(Filter::name);
-	 *     addFilter(Filter::price_gt);
-	 *     addFilter(Filter::category, "category.name");
+	 *     addFilter(Params::name);
+	 *     addFilter(Params::price_gt);
+	 *     addFilter(Params::category, "category.name");
 	 *
 	 *     // Add entity fetches
-	 *     addEntityFetch(Filter::fetchCategory);
+	 *     addEntityFetch(Params::fetchCategory);
 	 *
 	 *     // Add sort fields
-	 *     addSortField(Filter::sortByName);
-	 *     addSortField(Filter::sortByPrice_desc);
+	 *     addSortField(Params::sortByName);
+	 *     addSortField(Params::sortByPrice_desc);
 	 * }
 	 * }</pre>
 	 *
 	 * <p>The configured criteria will be used when constructing queries via the {@link #query(Consumer)}
-	 * or {@link #query(Filter)} methods.</p>
+	 * method.</p>
 	 */
 	protected abstract void buildCriteria();
 
 	/**
-	 * Adds a filter to the query configuration by generating an implementation of the filter type
-	 * and applying the specified filter method. This method extracts field and filter operation
-	 * from the generated filter instance and associates the filter method with the corresponding field.
+	 * Adds a filter to the query configuration. This method extracts field and filter operation
+	 * from the param method name (if the operation suffix is present or equals if not) and associates the filter
+	 * with the corresponding field.
 	 *
 	 * @param <V>    the type of the value associated with the filter method.
-	 * @param method the filter method used to define the filter criteria. It accepts a filter instance
-	 *               and a value, enabling the customization of filter logic for the query.
+	 * @param method the filter method reference used to define the filter criteria.
 	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method) {
-		var filterName = extractFilterName(method);
-		var field = extractFieldName(filterName);
-		var operation = extractOperation(filterName);
-		addFilter(filterName, field, operation);
+	protected final <V> void addFilter(ParamMethod<P, V> method) {
+		var paramName = extractParamName(method);
+		var field = extractFieldName(paramName);
+		var operation = extractOperation(paramName);
+		addFilter(paramName, field, operation);
 	}
 
 	/**
-	 * Adds a filter to the query configuration by analyzing the specified filterName and determining the
-	 * appropriate filter operation. This method extracts the operation suffix from the filterName name if present,
-	 * and associates the filter method with the determined filterName and operation.
+	 * Adds a filter to the query configuration. This method extracts and filter operation from the param method
+	 * name (if the operation suffix is present or equals if not) and associates the filter with the corresponding
+	 * field.
 	 *
 	 * @param <V>        the type of the value associated with the filter method.
-	 * @param method     the filter method used to define the filter criteria. It specifies how the filter
-	 *                   instance and value should be processed.
+	 * @param method     the filter method reference used to define the filter criteria.
 	 * @param field      the actual name of the field in the entity to which the filter will be applied.
 	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method, String field) {
-		var filterName = extractFilterName(method);
-		var operation = extractOperation(filterName);
-		addFilter(filterName, field, operation);
+	protected final <V> void addFilter(ParamMethod<P, V> method, String field) {
+		var paramName = extractParamName(method);
+		var operation = extractOperation(paramName);
+		addFilter(paramName, field, operation);
 	}
 
 	/**
-	 * Adds a filter to the query configuration. This method integrates the provided filter method,
-	 * field name, and operation to define filtering criteria used in query execution.
+	 * Adds a filter to the query configuration.
 	 *
 	 * @param <V>        the type of the value associated with the filter method.
-	 * @param method     the filter method used to define the filter criteria. This method specifies
-	 *                   how the filter instance and value should be processed.
+	 * @param method     the filter method reference used to define the filter criteria.
 	 * @param field      the actual name of the field in the entity to which the filter will be applied.
 	 * @param operation  the operation that defines the type of filter to apply
 	 *                   (e.g., equals, greater than, less than, etc.).
 	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method, String field, Operation operation) {
-		var filterName = extractFilterName(method);
-		addFilter(filterName, field, operation);
+	protected final <V> void addFilter(ParamMethod<P, V> method, String field, Operation operation) {
+		var paramName = extractParamName(method);
+		addFilter(paramName, field, operation);
 	}
 
 	/**
-	 * Adds a filter to the query configuration by generating an implementation of the filter type
-	 * and applying the specified filter method. This method extracts the field and filter operation
-	 * from the generated filter instance and associates the filter method with the corresponding field.
+	 * Adds a filter to the query configuration. This method extracts field and filter operation from the param
+	 * method name. Since there is no parameter value for `VoidParamMethod`, it's used to define boolean filters,
+	 * such as not null checks.
 	 *
-	 * @param method the filter method to define the filter criteria. It accepts a filter instance
-	 *               and enables the customization of filter logic for the query.
+	 * @param method the filter method reference used to define the filter criteria.
 	 */
-	protected final void addFilter(VoidFilterMethod<F> method) {
-		var filterName = extractFilterName(method);
-		var field = extractFieldName(filterName);
-		var operation = extractOperation(filterName);
-		addFilter(filterName, field, operation);
+	protected final void addFilter(VoidParamMethod<P> method) {
+		var paramName = extractParamName(method);
+		var field = extractFieldName(paramName);
+		var operation = extractOperation(paramName);
+		addFilter(paramName, field, operation);
 	}
 
 	/**
-	 * Adds a filter to the query configuration. This method generates an implementation
-	 * of the filter type and applies the specified filter method. The filter criteria
-	 * are defined based on the provided custom operation.
+	 * Adds a filter to the query configuration. This method allows for custom filtering logic
+	 * by associating a custom operation with a filter method.
 	 *
-	 * @param <V>             the type of the value associated with the filter method.
-	 * @param method          the filter method used to define the filter criteria. It accepts
-	 *                        a filter instance and a value, enabling the customization of
-	 *                        filter logic for the query.
-	 * @param customOperation the custom operation that defines the filter to apply. Allows
-	 *                        custom logic for constructing filter predicates dynamically.
+	 * @param <V>             the type of the value associated with the filter
+	 * @param method          a functional interface representing the method to extract the parameter and value pair
+	 * @param customOperation a custom operation defining the filtering logic
 	 */
-	protected final <V> void addFilter(FilterMethod<F, V> method, CustomOperation customOperation) {
-		var filterName = extractFilterName(method);
-		addFilter(filterName, customOperation);
+	protected final <V> void addFilter(ParamMethod<P, V> method, CustomOperation customOperation) {
+		var paramName = extractParamName(method);
+		addFilter(paramName, customOperation);
 	}
 
 	/**
-	 * Adds a filter with two parameters to the query configuration. This method integrates
-	 * the provided filter method and custom operation to define filtering logic for query execution.
-	 * A filter instance is dynamically generated and configured through the specified method.
+	 * Adds a filter to the query configuration. This method allows for custom filtering logic
+	 * by associating a custom operation with a filter method. These two parameters are sent to the CustomOperation
+	 * as an array of objects, allowing for flexible filtering based on two values.
 	 *
 	 * @param <V1>            the type of the first value associated with the filter method.
 	 * @param <V2>            the type of the second value associated with the filter method.
-	 * @param method          the filter method used to define the filter criteria. This method
-	 *                        accepts a filter instance and two values to process the filter logic.
-	 * @param customOperation the custom operation that defines the filter to apply. Allows custom
-	 *                        filtering logic based on context and value.
+	 * @param method          a functional interface representing the method to extract the parameter and value pair
+	 * @param customOperation a custom operation defining the filtering logic
 	 */
-	protected final <V1, V2> void addFilter(Filter2ParamsMethod<F, V1, V2> method, CustomOperation customOperation) {
-		var filterName = extractFilterName(method);
-		addFilter(filterName, customOperation);
+	protected final <V1, V2> void addFilter(Param2ParamsMethod<P, V1, V2> method, CustomOperation customOperation) {
+		var paramName = extractParamName(method);
+		addFilter(paramName, customOperation);
 	}
 
 	/**
-	 * Adds an entity fetch operation by extracting and validating the filter name
-	 * and associating it with a corresponding entity field.
+	 * Adds an entity fetch operation. This method extracts the field representing the related entity from the
+	 * param method name.
 	 *
-	 * @param method the VoidFilterMethod instance representing the filter method for entity fetch
+	 * @param method the fetch method reference used to define the fetch operation.
 	 * @param <V>    the type parameter representing the value type of the filter method
 	 */
-	protected final <V> void addEntityFetch(VoidFilterMethod<F> method) {
-		var filterName = extractFilterName(method);
-		validateFetchFilterName(filterName);
+	protected final <V> void addEntityFetch(VoidParamMethod<P> method) {
+		var paramName = extractParamName(method);
+		validateFetchParamName(paramName);
 
-		var field = Character.toLowerCase(filterName.charAt(5)) + filterName.substring(6);
+		var field = Character.toLowerCase(paramName.charAt(5)) + paramName.substring(6);
 
-		addEntityFetch(filterName, field);
+		addEntityFetch(paramName, field);
 	}
 
 	/**
-	 * Adds an entity fetch configuration to the query construction process.
-	 * This method links a field in the entity to a fetch-related filter method, enabling
-	 * the inclusion of related entities in the query results.
+	 * Adds an entity fetch operation. This method extracts the field representing the related entity from the
+	 * param method name.
 	 *
-	 * @param <V>    the type of the value associated with the fetch method.
-	 * @param method the fetch-related filter method used to determine the fetch criteria.
-	 *               It operates on a filter instance and configures fetch logic.
+	 * @param method the fetch method reference used to define the fetch operation.
 	 * @param field  the name of the entity property or field to be included in the fetch operation.
 	 *               This corresponds to a relationship or property within the entity.
 	 */
-	protected final <V> void addEntityFetch(VoidFilterMethod<F> method, String field) {
-		var filterName = extractFilterName(method);
-		validateFetchFilterName(filterName);
+	protected final void addEntityFetch(VoidParamMethod<P> method, String field) {
+		var paramName = extractParamName(method);
+		validateFetchParamName(paramName);
 
-		addEntityFetch(filterName, field);
+		addEntityFetch(paramName, field);
 	}
 
 	/**
-	 * Adds a sort field to the query configuration by extracting and validating the filter name
-	 * and associating it with a corresponding entity field.
+	 * Adds a sort field to the query configuration. This method extracts field and sort order from the param
+	 * method name (if the order suffix is present or asc if not) and associates the sort operation
+	 * with the corresponding field.
 	 *
-	 * @param method the VoidFilterMethod instance representing the filter method for sorting
+	 * @param method the sort method reference used to define the filter criteria.
 	 */
-	protected final void addSortField(VoidFilterMethod<F> method) {
-		var filterName = extractFilterName(method);
-		validateSortFilterName(filterName);
+	protected final void addSortField(VoidParamMethod<P> method) {
+		var paramName = extractParamName(method);
+		validateSortParamName(paramName);
 
-		var field = Character.toLowerCase(filterName.charAt(6)) + filterName.substring(7);
+		var field = Character.toLowerCase(paramName.charAt(6)) + paramName.substring(7);
 		var order = SortOrder.ASC;
 
 		var orderIndex = field.lastIndexOf('_');
@@ -309,23 +269,25 @@ public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 			}
 		}
 
-		addSortField(filterName, field, order);
+		addSortField(paramName, field, order);
 	}
 
 	/**
-	 * Adds a sort field to the query configuration.
+	 * Adds a sort field to the query configuration. This method extracts the sort order from the param
+	 * method name (if the order suffix is present or asc if not) and associates the sort operation
+	 * with the corresponding field.
 	 *
-	 * @param method the VoidFilterMethod instance representing the filter method for sorting
-	 * @param field  the name of the entity property or field to be sorted
+	 * @param method the sort method reference used to define the filter criteria.
+	 * @param field  the actual name of the field in the entity to which the filter will be applied.
 	 */
-	protected final void addSortField(VoidFilterMethod<F> method, String field) {
-		var filterName = extractFilterName(method);
-		validateSortFilterName(filterName);
+	protected final void addSortField(VoidParamMethod<P> method, String field) {
+		var paramName = extractParamName(method);
+		validateSortParamName(paramName);
 
 		var order = SortOrder.ASC;
-		var orderIndex = filterName.lastIndexOf('_');
+		var orderIndex = paramName.lastIndexOf('_');
 		if (orderIndex > 0) {
-			var orderSuffix = filterName.substring(orderIndex + 1);
+			var orderSuffix = paramName.substring(orderIndex + 1);
 			var orderFromSuffix = SortOrder.fromSuffix(orderSuffix);
 
 			if (orderFromSuffix != null) {
@@ -333,71 +295,71 @@ public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 			}
 		}
 
-		addSortField(filterName, field, order);
+		addSortField(paramName, field, order);
 	}
 
 	/**
 	 * Adds a sort field to the query configuration.
 	 *
-	 * @param method    the VoidFilterMethod instance representing the filter method for sorting
-	 * @param field     the name of the entity property or field to be sorted
+	 * @param method    the sort method reference used to define the filter criteria.
+	 * @param field     the actual name of the field in the entity to which the filter will be applied.
 	 * @param sortOrder the order to sort the field (ASC or DESC)
 	 */
-	protected final void addSortField(VoidFilterMethod<F> method, String field, SortOrder sortOrder) {
-		var filterName = extractFilterName(method);
-		validateSortFilterName(filterName);
+	protected final void addSortField(VoidParamMethod<P> method, String field, SortOrder sortOrder) {
+		var paramName = extractParamName(method);
+		validateSortParamName(paramName);
 
-		addSortField(filterName, field, sortOrder);
+		addSortField(paramName, field, sortOrder);
 	}
 
 	/**
-	 * Adds a sort field to the query configuration using a method reference that takes a SortOrder parameter.
-	 * The SortOrder parameter will be used when the query is executed.
+	 * Adds a sort field to the query configuration. This method extracts field from the param method name
+	 * ant gets the sort order from the provided param method parameter.
 	 *
-	 * @param method the FilterMethod instance representing the filter method for sorting that takes a SortOrder parameter
+	 * @param method the sort method reference used to define the filter criteria, including SortOrder parameter.
 	 */
-	protected final void addSortField(FilterMethod<F, SortOrder> method) {
-		var filterName = extractFilterName(method);
-		validateSortFilterName(filterName);
+	protected final void addSortField(ParamMethod<P, SortOrder> method) {
+		var paramName = extractParamName(method);
+		validateSortParamName(paramName);
 
-		var field = Character.toLowerCase(filterName.charAt(6)) + filterName.substring(7);
+		var field = Character.toLowerCase(paramName.charAt(6)) + paramName.substring(7);
 
-		addSortField(filterName, field, SortOrder.ASC);
+		addSortField(paramName, field, SortOrder.ASC);
 	}
 
-	private void addFilter(String filterName, String field, Operation operation) {
-		filterEntries.put(filterName, new FilterEntry(field, operation));
+	private void addFilter(String paramName, String field, Operation operation) {
+		filterEntries.put(paramName, new FilterEntry(field, operation));
 	}
 
-	private void addFilter(String filterName, CustomOperation customOperation) {
-		filterEntries.put(filterName, new FilterEntry(filterName, customOperation));
+	private void addFilter(String paramName, CustomOperation customOperation) {
+		filterEntries.put(paramName, new FilterEntry(paramName, customOperation));
 	}
 
-	private String extractFieldName(String filterName) {
-		var operationIndex = filterName.lastIndexOf('_');
+	private String extractFieldName(String paramName) {
+		var operationIndex = paramName.lastIndexOf('_');
 
 		if (operationIndex < 0) {
-			return filterName;
+			return paramName;
 		}
 
-		var operationSuffix = filterName.substring(operationIndex + 1);
+		var operationSuffix = paramName.substring(operationIndex + 1);
 		var operation = Operation.fromSuffix(operationSuffix);
 
 		if (operation != null) {
-			return filterName.substring(0, operationIndex);
+			return paramName.substring(0, operationIndex);
 		}
 
-		return filterName;
+		return paramName;
 	}
 
-	private Operation extractOperation(String filterName) {
-		var operationIndex = filterName.lastIndexOf('_');
+	private Operation extractOperation(String paramName) {
+		var operationIndex = paramName.lastIndexOf('_');
 
 		if (operationIndex < 0) {
 			return Operation.EQUALS;
 		}
 
-		var operationSuffix = filterName.substring(operationIndex + 1);
+		var operationSuffix = paramName.substring(operationIndex + 1);
 		var operation = Operation.fromSuffix(operationSuffix);
 
 		if (operation != null) {
@@ -407,41 +369,41 @@ public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 		return Operation.EQUALS;
 	}
 
-	private void addEntityFetch(String filterName, String field) {
-		fetchEntries.put(filterName, field);
+	private void addEntityFetch(String paramName, String field) {
+		fetchEntries.put(paramName, field);
 	}
 
-	private void addSortField(String filterName, String field, SortOrder order) {
-		sortEntries.put(filterName, new SortEntry(field, order));
+	private void addSortField(String paramName, String field, SortOrder order) {
+		sortEntries.put(paramName, new SortEntry(field, order));
 	}
 
 	@SuppressWarnings("unchecked")
-	private String extractFilterName(Object methodReference) {
-		var filter = FilterGenerator.generateImplementation(filterClass());
+	private String extractParamName(Object methodReference) {
+		var params = ParamsGenerator.generateImplementation(queryParamClass());
 
-		if (methodReference instanceof FilterMethod) {
-			var filterMethod = (FilterMethod<F, ?>) methodReference;
-			filterMethod.accept(filter, null);
-		} else if (methodReference instanceof Filter2ParamsMethod) {
-			var twoParamsMethod = (Filter2ParamsMethod<F, ?, ?>) methodReference;
-			twoParamsMethod.accept(filter, null, null);
-		} else if (methodReference instanceof VoidFilterMethod) {
-			var voidMethod = (VoidFilterMethod<F>) methodReference;
-			voidMethod.accept(filter);
+		if (methodReference instanceof ParamMethod) {
+			var filterMethod = (ParamMethod<P, ?>) methodReference;
+			filterMethod.accept(params, null);
+		} else if (methodReference instanceof Param2ParamsMethod) {
+			var twoParamsMethod = (Param2ParamsMethod<P, ?, ?>) methodReference;
+			twoParamsMethod.accept(params, null, null);
+		} else if (methodReference instanceof VoidParamMethod) {
+			var voidMethod = (VoidParamMethod<P>) methodReference;
+			voidMethod.accept(params);
 		}
 
-		var filterValues = FilterGenerator.values(filter);
-		return filterValues.keySet().iterator().next();
+		var paramsValues = ParamsGenerator.values(params);
+		return paramsValues.keySet().iterator().next();
 	}
 
-	private void validateFetchFilterName(String filterName) {
-		if (!filterName.startsWith("fetch")) {
+	private void validateFetchParamName(String paramName) {
+		if (!paramName.startsWith("fetch")) {
 			throw new IllegalArgumentException("Fetch filter name must start with 'fetch'");
 		}
 	}
 
-	private void validateSortFilterName(String filterName) {
-		if (!filterName.startsWith("sortBy")) {
+	private void validateSortParamName(String paramName) {
+		if (!paramName.startsWith("sortBy")) {
 			throw new IllegalArgumentException("Sort filter name must start with 'sortBy'");
 		}
 	}
@@ -456,24 +418,24 @@ public abstract class QueryRepository<T, F extends QueryRepository.Filter> {
 	protected abstract Class<T> entityClass();
 
 	/**
-	 * Retrieves the class type of the filter interface used by this repository.
-	 * This method is used internally to create dynamic implementations of the filter interface
+	 * Retrieves the class type of the params interface used by this repository.
+	 * This method is used internally to create dynamic implementations of the params interface
 	 * when building queries. Implementations should return the interface type that extends
-	 * {@link Filter} and defines the filtering methods for this repository.
+	 * {@link Params} and defines the filtering methods for this repository.
 	 *
-	 * <p>The filter interface should be defined as an inner interface or a separate interface
-	 * that extends {@link Filter} and declares methods for all supported filter operations.</p>
+	 * <p>The params interface should be defined as an inner interface or a separate interface
+	 * that extends {@link Params} and declares methods for all supported operations.</p>
 	 *
-	 * @return the {@code Class} object of the filter interface type {@code F}.
-	 * @see Filter
+	 * @return the {@code Class} object of the params interface type {@code P}.
+	 * @see Params
 	 */
-	protected abstract Class<F> filterClass();
+	protected abstract Class<P> queryParamClass();
 
 	/**
 	 * Represents a contract for defining filter behavior within the repository query system.
-	 * This interface serves as a marker for filter types and should be extended by repository-specific
-	 * filter interfaces that declare methods for each supported filter operation.
+	 * This interface serves as a marker for parameters types and should be extended by repository-specific
+	 * parameters interfaces that declare methods for each supported operation.
 	 */
-	protected interface Filter {
+	protected interface Params {
 	}
 }

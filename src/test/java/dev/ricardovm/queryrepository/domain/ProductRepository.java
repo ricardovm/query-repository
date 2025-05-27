@@ -23,7 +23,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.math.BigDecimal;
 
-public class ProductRepository extends QueryRepository<Product, ProductRepository.Filter> {
+public class ProductRepository extends QueryRepository<Product, ProductRepository.Params> {
 
 	public ProductRepository(EntityManager em) {
 		super(em);
@@ -31,11 +31,11 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 
 	@Override
 	protected void buildCriteria() {
-		addFilter(Filter::id);
-		addFilter(Filter::description_like);
-		addFilter(Filter::categoryName, "category.name");
-		addFilter(Filter::price_gt);
-		addFilter(Filter::orderMinimumQuantity_exists, (ctx, value) -> {
+		addFilter(Params::id);
+		addFilter(Params::description_like);
+		addFilter(Params::categoryName, "category.name");
+		addFilter(Params::price_gt);
+		addFilter(Params::orderMinimumQuantity_exists, (ctx, value) -> {
 			var minimumQuantity = (Integer) value;
 
 			Subquery<Integer> subquery = ctx.criteriaQuery().subquery(Integer.class);
@@ -47,7 +47,7 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 
 			return ctx.criteriaBuilder().exists(subquery);
 		});
-		addFilter(Filter::orderQuantityAndUnitPrice_exists, (ctx, value) -> {
+		addFilter(Params::orderQuantityAndUnitPrice_exists, (ctx, value) -> {
 			var params = (Object[]) value;
 			var quantity = (Integer) params[0];
 			var price = (BigDecimal) params[1];
@@ -63,10 +63,10 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 			return ctx.criteriaBuilder().exists(subquery);
 		});
 
-		addSortField(Filter::sortById);
-		addSortField(Filter::sortByName);
-		addSortField(Filter::sortByPrice);
-		addSortField(Filter::sortByPrice_desc);
+		addSortField(Params::sortById);
+		addSortField(Params::sortByName);
+		addSortField(Params::sortByPrice);
+		addSortField(Params::sortByPrice_desc);
 	}
 
 	@Override
@@ -75,11 +75,11 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 	}
 
 	@Override
-	protected Class<Filter> filterClass() {
-		return Filter.class;
+	protected Class<Params> queryParamClass() {
+		return Params.class;
 	}
 
-	public interface Filter extends QueryRepository.Filter {
+	public interface Params extends QueryRepository.Params {
 
 		void id(Long id);
 		void description_like(String description);

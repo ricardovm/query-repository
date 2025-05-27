@@ -5,7 +5,7 @@ import dev.ricardovm.queryrepository.QueryRepository;
 import javax.persistence.EntityManager;
 import java.util.List;
 
-public class OrderRepository extends QueryRepository<Order, OrderRepository.Filter> {
+public class OrderRepository extends QueryRepository<Order, OrderRepository.Params> {
 
 	public OrderRepository(EntityManager em) {
 		super(em);
@@ -13,11 +13,11 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Filt
 
 	@Override
 	protected void buildCriteria() {
-		addFilter(Filter::status);
-		addFilter(Filter::status_in);
+		addFilter(Params::status);
+		addFilter(Params::status_in);
 
-		addEntityFetch(Filter::fetchItems);
-		addEntityFetch(Filter::fetchItemsProduct, "items.product");
+		addEntityFetch(Params::fetchItems);
+		addEntityFetch(Params::fetchItemsProduct, "items.product");
 	}
 
 	@Override
@@ -26,11 +26,11 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Filt
 	}
 
 	@Override
-	protected Class<Filter> filterClass() {
-		return Filter.class;
+	protected Class<Params> queryParamClass() {
+		return Params.class;
 	}
 
-	public interface Filter extends QueryRepository.Filter {
+	public interface Params extends QueryRepository.Params {
 		void status(String status);
 		void status_in(List<String> statuses);
 

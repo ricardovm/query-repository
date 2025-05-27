@@ -16,13 +16,11 @@
 package dev.ricardovm.queryrepository;
 
 /**
- * This interface represents a method for applying a filter of type {@code F}
- * to control or modify the data retrieval process. The filter is expected
- * to be a subtype of {@link QueryRepository.Filter}.
+ * This interface represents a method for applying a query parameter with no value.
  *
- * @param <F> the type of filter, which must extend {@link QueryRepository.Filter}
+ * @param <P> the type of param, which must extend {@link QueryRepository.Params}
  */
-public interface VoidFilterMethod<F extends QueryRepository.Filter> {
+public interface VoidParamMethod<P extends QueryRepository.Params> {
 
-	void accept(F filter);
+	void accept(P params);
 }

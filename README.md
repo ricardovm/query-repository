@@ -50,7 +50,7 @@ Extend `QueryRepository` with your entity type and a custom filter interface:
 ```java
 import dev.ricardovm.queryrepository.QueryRepository;
 
-public class OrderRepository extends QueryRepository<Order, OrderRepository.Filter> {
+public class OrderRepository extends QueryRepository<Order, OrderRepository.Params> {
 
     public OrderRepository(EntityManager em) {
         super(em);
@@ -59,17 +59,17 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Filt
     @Override
     protected void buildCriteria() {
         // Define filters
-        addFilter(Filter::status);
-        addFilter(Filter::status_in);
+        addFilter(Params::status);
+        addFilter(Params::status_in);
 
         // Define entity fetches
-        addEntityFetch(Filter::fetchItems);
-        addEntityFetch(Filter::fetchItemsProduct, "items.product");
+        addEntityFetch(Params::fetchItems);
+        addEntityFetch(Params::fetchItemsProduct, "items.product");
 
         // Define sort fields
-        addSortField(Filter::sortById);
-        addSortField(Filter::sortByDate);
-        addSortField(Filter::sortByTotal_desc);
+        addSortField(Params::sortById);
+        addSortField(Params::sortByDate);
+        addSortField(Params::sortByTotal_desc);
     }
 
     @Override
@@ -78,11 +78,11 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Filt
     }
 
     @Override
-    protected Class<Filter> filterClass() {
-        return Filter.class;
+    protected Class<Params> paramsClass() {
+        return Params.class;
     }
 
-    public interface Filter extends QueryRepository.Filter {
+    public interface Params extends QueryRepository.Params {
         void status(String status);
 
         void status_in(List<String> statuses);
@@ -107,16 +107,16 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Filt
 OrderRepository orderRepository = new OrderRepository(entityManager);
 
 // Get a list
-List<Order> orders = orderRepository.query(f -> {
-    f.status_in(List.of("SHIPPED", "COMPLETED"));
-    f.fetchItems();
-    f.fetchItemsProduct();
-    f.sortByTotal_desc();
+List<Order> orders = orderRepository.query(q -> {
+    q.status_in(List.of("SHIPPED", "COMPLETED"));
+    q.fetchItems();
+    q.fetchItemsProduct();
+    q.sortByTotal_desc();
 }).list();
 
 // Or get a single result
-Optional<Order> order = orderRepository.query(f -> {
-    f.status("SHIPPED");
+Optional<Order> order = orderRepository.query(q -> {
+    q.status("SHIPPED");
 }).get();
 ```
 
@@ -154,16 +154,16 @@ This allows you to create complex queries that go beyond the standard operations
 ### Example: Custom Operation with Subquery
 
 ```java
-public class ProductRepository extends QueryRepository<Product, ProductRepository.Filter> {
+public class ProductRepository extends QueryRepository<Product, ProductRepository.Params> {
 
     @Override
     protected void buildCriteria() {
         // Standard filters
-        addFilter(Filter::id);
-        addFilter(Filter::description_like);
+        addFilter(Params::id);
+        addFilter(Params::description_like);
 
         // Custom operation using a subquery
-        addFilter(Filter::orderMinimumQuantity_exists, (ctx, value) -> {
+        addFilter(Params::orderMinimumQuantity_exists, (ctx, value) -> {
             var minimumQuantity = (Integer) value;
 
             // Create a subquery
@@ -180,7 +180,7 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
         });
     }
 
-    public interface Filter extends QueryRepository.Filter {
+    public interface Params extends QueryRepository.Params {
         void id(Long id);
         void description_like(String description);
         void orderMinimumQuantity_exists(Integer minimumQuantity);
@@ -188,9 +188,9 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 }
 
 // Usage
-List<Product> products = productRepository.query(f -> {
-    f.description_like("%keyboard%");
-    f.orderMinimumQuantity_exists(5); // Find products ordered with quantity >= 5
+List<Product> products = productRepository.query(q -> {
+    q.description_like("%keyboard%");
+    q.orderMinimumQuantity_exists(5); // Find products ordered with quantity >= 5
 }).list();
 ```
 

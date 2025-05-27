@@ -29,7 +29,7 @@ class FilterInvocationHandler implements InvocationHandler {
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		var methodName = method.getName();
 
-		if (methodName.equals("filterValues") && method.getParameterCount() == 0) {
+		if (methodName.equals("paramsValues") && method.getParameterCount() == 0) {
 			return values;
 		}
 

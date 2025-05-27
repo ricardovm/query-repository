@@ -18,28 +18,28 @@ package dev.ricardovm.queryrepository;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 
-class FilterGenerator {
+class ParamsGenerator {
 
 	@SuppressWarnings("unchecked")
-	static <T extends QueryRepository.Filter> T generateImplementation(Class<T> clazz) {
+	static <T extends QueryRepository.Params> T generateImplementation(Class<T> clazz) {
 		var handler = new FilterInvocationHandler();
 
 		return (T) Proxy.newProxyInstance(
 				clazz.getClassLoader(),
-				new Class<?>[]{clazz, FilterGenerator.FilterValues.class},
+				new Class<?>[]{clazz, ParamsValues.class},
 				handler);
 	}
 
-	static Map<String, Object> values(Object filter) {
-		if (filter instanceof FilterGenerator.FilterValues) {
-			return ((FilterGenerator.FilterValues) filter).filterValues();
+	static Map<String, Object> values(Object params) {
+		if (params instanceof ParamsValues) {
+			return ((ParamsValues) params).paramsValues();
 		}
 
-		throw new IllegalArgumentException("Filter not supported: " + filter.getClass());
+		throw new IllegalArgumentException("Parameter not supported: " + params.getClass());
 	}
 
-	private interface FilterValues {
+	private interface ParamsValues {
 
-		Map<String, Object> filterValues();
+		Map<String, Object> paramsValues();
 	}
 }
