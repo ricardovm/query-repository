@@ -26,7 +26,7 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Para
 	}
 
 	@Override
-	protected Class<Params> queryParamClass() {
+	protected Class<Params> queryParamsClass() {
 		return Params.class;
 	}
 

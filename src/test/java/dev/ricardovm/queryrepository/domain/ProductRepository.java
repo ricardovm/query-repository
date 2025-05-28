@@ -75,7 +75,7 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 	}
 
 	@Override
-	protected Class<Params> queryParamClass() {
+	protected Class<Params> queryParamsClass() {
 		return Params.class;
 	}
 

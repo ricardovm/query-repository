@@ -28,7 +28,7 @@ import java.util.function.Consumer;
  * through a strongly-typed params interface.</p>
  *
  * <p>Subclasses must implement {@link #buildCriteria()} to define the available operations,
- * {@link #entityClass()} to specify the entity type, and {@link #queryParamClass()} to specify the params interface type.</p>
+ * {@link #entityClass()} to specify the entity type, and {@link #queryParamsClass()} to specify the params interface type.</p>
  *
  * <p>The repository supports various filter operations, entity fetching, and sorting capabilities
  * that can be configured during the buildCriteria phase and then used at query time.</p>
@@ -91,7 +91,7 @@ public abstract class QueryRepository<T, P extends QueryRepository.Params> {
 	 *         such as a list of entities or a single entity.
 	 */
 	public final Query<T> query(Consumer<P> query) {
-		P paramsImpl = ParamsGenerator.generateImplementation(queryParamClass());
+		P paramsImpl = ParamsGenerator.generateImplementation(queryParamsClass());
 		query.accept(paramsImpl);
 		var paramsValues = ParamsGenerator.values(paramsImpl);
 
@@ -379,7 +379,7 @@ public abstract class QueryRepository<T, P extends QueryRepository.Params> {
 
 	@SuppressWarnings("unchecked")
 	private String extractParamName(Object methodReference) {
-		var params = ParamsGenerator.generateImplementation(queryParamClass());
+		var params = ParamsGenerator.generateImplementation(queryParamsClass());
 
 		if (methodReference instanceof ParamMethod) {
 			var filterMethod = (ParamMethod<P, ?>) methodReference;
@@ -429,7 +429,7 @@ public abstract class QueryRepository<T, P extends QueryRepository.Params> {
 	 * @return the {@code Class} object of the params interface type {@code P}.
 	 * @see Params
 	 */
-	protected abstract Class<P> queryParamClass();
+	protected abstract Class<P> queryParamsClass();
 
 	/**
 	 * Represents a contract for defining filter behavior within the repository query system.
