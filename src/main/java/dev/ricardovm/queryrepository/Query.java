@@ -37,7 +37,6 @@ public class Query<T> {
 	private final Map<String, String> fetchEntries;
 	private final Map<String, Object> filterValues;
 	private final Map<String, SortEntry> sortEntries;
-	private final Map<String, Join> joins = new HashMap<>();
 
 	private final CriteriaBuilder criteriaBuilder;
 
@@ -90,6 +89,7 @@ public class Query<T> {
 
 	private TypedQuery<T> buildQuery(String fetchField) {
 		var predicates = new ArrayList<Predicate>();
+		var joins = new HashMap<String, Join>();
 
 		var criteriaQuery = criteriaBuilder.createQuery(entityClass);
 		var root = criteriaQuery.from(entityClass);
@@ -104,7 +104,7 @@ public class Query<T> {
 			}
 
 			if (filterEntry.operation() != null) {
-				predicates.add(createOperationPredicate(root, filterEntry, entry.getValue()));
+				predicates.add(createOperationPredicate(root, joins, filterEntry, entry.getValue()));
 			} else {
 				predicates.add(addCustomOperation(criteriaQuery, root, filterEntry, entry.getValue()));
 			}
@@ -170,7 +170,7 @@ public class Query<T> {
 		return currentRoot;
 	}
 
-	private Predicate createOperationPredicate(Root<T> root, FilterEntry filterEntry, Object value) {
+	private Predicate createOperationPredicate(Root<T> root, HashMap<String, Join> joins, FilterEntry filterEntry, Object value) {
 		Expression predicateField;
 		String field = filterEntry.field();
 
@@ -179,8 +179,13 @@ public class Query<T> {
 			From<?, ?> from = root;
 
 			for (int i = 0; i < parts.length - 1; i++) {
-				String joinPath = String.join(".", java.util.Arrays.copyOfRange(parts, 0, i + 1));
-				from = getOrCreateJoin(from, parts[i], joinPath);
+				var joinPath = String.join(".", java.util.Arrays.copyOfRange(parts, 0, i + 1));
+				var join = joins.get(joinPath);
+				if (join == null) {
+					join = from.join(parts[i], JoinType.INNER);
+					joins.put(joinPath, join);
+				}
+				from = join;
 			}
 
 			predicateField = from.get(parts[parts.length - 1]);
@@ -226,14 +231,5 @@ public class Query<T> {
 
 		var queryContext = new QueryContext(criteriaBuilder, criteriaQuery, root);
 		return filterEntry.customOperation().apply(queryContext, value);
-	}
-
-	private Join<?, ?> getOrCreateJoin(From<?, ?> from, String attribute, String joinPath) {
-		Join<?, ?> join = joins.get(joinPath);
-		if (join == null) {
-			join = from.join(attribute, JoinType.INNER);
-			joins.put(joinPath, join);
-		}
-		return join;
 	}
 }

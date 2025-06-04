@@ -28,7 +28,10 @@ public class Order {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private String customerName;
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Customer customer;
+
+	@Column(name = "order_date")
 	private Instant orderDate;
 	private String status;
 
@@ -38,8 +41,8 @@ public class Order {
 	public Order() {
 	}
 
-	public Order(String customerName, Instant orderDate, String status) {
-		this.customerName = customerName;
+	public Order(Customer customer, Instant orderDate, String status) {
+		this.customer = customer;
 		this.orderDate = orderDate;
 		this.status = status;
 	}
@@ -62,12 +65,12 @@ public class Order {
 		this.id = id;
 	}
 
-	public String getCustomerName() {
-		return customerName;
+	public Customer getCustomer() {
+		return customer;
 	}
 
-	public void setCustomerName(String customerName) {
-		this.customerName = customerName;
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
 	}
 
 	public Instant getOrderDate() {
@@ -98,7 +101,7 @@ public class Order {
 	public String toString() {
 		return "Order{" +
 			"id=" + id +
-			", customerName='" + customerName + '\'' +
+			", customer='" + customer.getId() + '\'' +
 			", orderDate=" + orderDate +
 			", status='" + status + '\'' +
 			", items=" + items.size() +

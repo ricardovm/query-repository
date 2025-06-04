@@ -35,6 +35,8 @@ public class OrderItem {
 	private Product product;
 
 	private Integer quantity;
+
+	@Column(name = "unit_price")
 	private BigDecimal unitPrice;
 
 	public OrderItem() {

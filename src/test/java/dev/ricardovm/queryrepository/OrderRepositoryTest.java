@@ -62,4 +62,23 @@ class OrderRepositoryTest extends BaseJpaTest {
 		assertEquals("Headphones", order.getItems().get(1).getProduct().getName());
 		assertEquals("Smartphone", order.getItems().get(2).getProduct().getName());
 	}
+
+	@Test
+	void testLoadRelatedEntitiesWithJoinFilter() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> {
+			f.customerName("John Doe");
+			f.fetchItems();
+			f.fetchItemsProduct();
+		}).list();
+
+		em.clear();
+
+		assertEquals(1, orders.size());
+
+		var order = orders.get(0);
+		assertEquals(1L, order.getId());
+		assertEquals(2, order.getItems().size());
+		assertEquals("Laptop", order.getItems().get(0).getProduct().getName());
+	}
 }

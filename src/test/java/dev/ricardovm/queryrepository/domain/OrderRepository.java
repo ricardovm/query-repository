@@ -15,6 +15,7 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Para
 	protected void buildCriteria() {
 		addFilter(Params::status);
 		addFilter(Params::status_in);
+		addFilter(Params::customerName, "customer.name");
 
 		addEntityFetch(Params::fetchItems);
 		addEntityFetch(Params::fetchItemsProduct, "items.product");
@@ -33,6 +34,7 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Para
 	public interface Params extends QueryRepository.Params {
 		void status(String status);
 		void status_in(List<String> statuses);
+		void customerName(String customerName);
 
 		void fetchItems();
 		void fetchItemsProduct();
