@@ -17,7 +17,6 @@ package dev.ricardovm.queryrepository;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,7 +44,6 @@ class FilterInvocationHandler implements InvocationHandler {
 			}
 
 			values.put(methodName, value);
-			System.out.printf("Setting %s to %s%n", methodName, Arrays.toString(args));
 			return null;
 		}
 
