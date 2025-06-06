@@ -32,6 +32,7 @@ Add the following dependency to your Maven project:
 ```java
 @Entity
 public class Order {
+
     @Id
     private Long id;
     private String status;
