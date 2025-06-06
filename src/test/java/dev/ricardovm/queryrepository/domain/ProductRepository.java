@@ -16,6 +16,7 @@
 package dev.ricardovm.queryrepository.domain;
 
 import dev.ricardovm.queryrepository.BaseQueryRepository;
+import dev.ricardovm.queryrepository.QueryRepository;
 import dev.ricardovm.queryrepository.SortOrder;
 
 import javax.persistence.EntityManager;
@@ -79,7 +80,7 @@ public class ProductRepository extends BaseQueryRepository<Product, ProductRepos
 		return Params.class;
 	}
 
-	public interface Params extends BaseQueryRepository.Params {
+	public interface Params extends QueryRepository.Params {
 
 		void id(Long id);
 		void description_like(String description);

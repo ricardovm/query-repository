@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  * @param <T> the type of the entity being queried.
  * @param <P> the type of the params used to define query criteria, which extends {@link Params}.
  */
-public abstract class BaseQueryRepository<T, P extends BaseQueryRepository.Params> {
+public abstract class BaseQueryRepository<T, P extends QueryRepository.Params> implements QueryRepository<T, P> {
 
 	private final EntityManager entityManager;
 
@@ -430,12 +430,4 @@ public abstract class BaseQueryRepository<T, P extends BaseQueryRepository.Param
 	 * @see Params
 	 */
 	protected abstract Class<P> queryParamsClass();
-
-	/**
-	 * Represents a contract for defining filter behavior within the repository query system.
-	 * This interface serves as a marker for parameters types and should be extended by repository-specific
-	 * parameters interfaces that declare methods for each supported operation.
-	 */
-	protected interface Params {
-	}
 }

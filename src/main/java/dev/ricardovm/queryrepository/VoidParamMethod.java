@@ -18,9 +18,9 @@ package dev.ricardovm.queryrepository;
 /**
  * This interface represents a method for applying a query parameter with no value.
  *
- * @param <P> the type of param, which must extend {@link BaseQueryRepository.Params}
+ * @param <P> the type of param, which must extend {@link QueryRepository.Params}
  */
-public interface VoidParamMethod<P extends BaseQueryRepository.Params> {
+public interface VoidParamMethod<P extends QueryRepository.Params> {
 
 	void accept(P params);
 }

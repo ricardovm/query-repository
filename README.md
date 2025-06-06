@@ -82,7 +82,7 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
         return Params.class;
     }
 
-    public interface Params extends BaseQueryRepository.Params {
+    public interface Params extends QueryRepository.Params {
         void status(String status);
 
         void status_in(List<String> statuses);
@@ -180,7 +180,7 @@ public class ProductRepository extends BaseQueryRepository<Product, ProductRepos
         });
     }
 
-    public interface Params extends BaseQueryRepository.Param****s {
+    public interface Params extends QueryRepository.Params {
         void id(Long id);
         void description_like(String description);
         void orderMinimumQuantity_exists(Integer minimumQuantity);

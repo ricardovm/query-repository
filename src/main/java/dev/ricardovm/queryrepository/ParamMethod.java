@@ -19,10 +19,10 @@ package dev.ricardovm.queryrepository;
  * Represents a method of applying a quary parameter to a value in the context of a
  * defined query and repository mechanism.
  *
- * @param <P> the type of the params, extending BaseQueryRepository.Params
+ * @param <P> the type of the params, extending QueryRepository.Params
  * @param <V> the type of the value to be filtered
  */
-public interface ParamMethod<P extends BaseQueryRepository.Params, V> {
+public interface ParamMethod<P extends QueryRepository.Params, V> {
 
 	void accept(P params, V value);
 }
