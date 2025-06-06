@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  * @param <T> the type of the entity being queried.
  * @param <P> the type of the params used to define query criteria, which extends {@link Params}.
  */
-public abstract class QueryRepository<T, P extends QueryRepository.Params> {
+public abstract class BaseQueryRepository<T, P extends BaseQueryRepository.Params> {
 
 	private final EntityManager entityManager;
 
@@ -45,13 +45,13 @@ public abstract class QueryRepository<T, P extends QueryRepository.Params> {
 	private final Map<String, SortEntry> sortEntries = new LinkedHashMap<>();
 
 	/**
-	 * Constructs a new QueryRepository with the specified EntityManager.
+	 * Constructs a new BaseQueryRepository with the specified EntityManager.
 	 * This constructor initializes the repository and calls {@link #buildCriteria()}
 	 * to set up the filter, fetch, and sort configurations.
 	 *
 	 * @param entityManager the JPA EntityManager to be used for query execution
 	 */
-	protected QueryRepository(EntityManager entityManager) {
+	protected BaseQueryRepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
 		buildCriteria();
 	}

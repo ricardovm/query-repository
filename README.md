@@ -45,12 +45,12 @@ public class Order {
 
 ### 2. Create a repository class
 
-Extend `QueryRepository` with your entity type and a custom filter interface:
+Extend `BaseQueryRepository` with your entity type and a custom filter interface:
 
 ```java
-import dev.ricardovm.queryrepository.QueryRepository;
+import dev.ricardovm.queryrepository.BaseQueryRepository;
 
-public class OrderRepository extends QueryRepository<Order, OrderRepository.Params> {
+public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.Params> {
 
     public OrderRepository(EntityManager em) {
         super(em);
@@ -82,7 +82,7 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Para
         return Params.class;
     }
 
-    public interface Params extends QueryRepository.Params {
+    public interface Params extends BaseQueryRepository.Params {
         void status(String status);
 
         void status_in(List<String> statuses);
@@ -154,7 +154,7 @@ This allows you to create complex queries that go beyond the standard operations
 ### Example: Custom Operation with Subquery
 
 ```java
-public class ProductRepository extends QueryRepository<Product, ProductRepository.Params> {
+public class ProductRepository extends BaseQueryRepository<Product, ProductRepository.Params> {
 
     @Override
     protected void buildCriteria() {
@@ -180,7 +180,7 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
         });
     }
 
-    public interface Params extends QueryRepository.Params {
+    public interface Params extends BaseQueryRepository.Param****s {
         void id(Long id);
         void description_like(String description);
         void orderMinimumQuantity_exists(Integer minimumQuantity);

@@ -21,7 +21,7 @@ import java.util.Map;
 class ParamsGenerator {
 
 	@SuppressWarnings("unchecked")
-	static <T extends QueryRepository.Params> T generateImplementation(Class<T> clazz) {
+	static <T extends BaseQueryRepository.Params> T generateImplementation(Class<T> clazz) {
 		var handler = new FilterInvocationHandler();
 
 		return (T) Proxy.newProxyInstance(

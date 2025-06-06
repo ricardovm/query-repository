@@ -1,11 +1,11 @@
 package dev.ricardovm.queryrepository.domain;
 
-import dev.ricardovm.queryrepository.QueryRepository;
+import dev.ricardovm.queryrepository.BaseQueryRepository;
 
 import javax.persistence.EntityManager;
 import java.util.List;
 
-public class OrderRepository extends QueryRepository<Order, OrderRepository.Params> {
+public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.Params> {
 
 	public OrderRepository(EntityManager em) {
 		super(em);
@@ -31,7 +31,7 @@ public class OrderRepository extends QueryRepository<Order, OrderRepository.Para
 		return Params.class;
 	}
 
-	public interface Params extends QueryRepository.Params {
+	public interface Params extends BaseQueryRepository.Params {
 		void status(String status);
 		void status_in(List<String> statuses);
 		void customerName(String customerName);

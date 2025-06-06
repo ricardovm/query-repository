@@ -15,7 +15,7 @@
  */
 package dev.ricardovm.queryrepository.domain;
 
-import dev.ricardovm.queryrepository.QueryRepository;
+import dev.ricardovm.queryrepository.BaseQueryRepository;
 import dev.ricardovm.queryrepository.SortOrder;
 
 import javax.persistence.EntityManager;
@@ -23,7 +23,7 @@ import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.math.BigDecimal;
 
-public class ProductRepository extends QueryRepository<Product, ProductRepository.Params> {
+public class ProductRepository extends BaseQueryRepository<Product, ProductRepository.Params> {
 
 	public ProductRepository(EntityManager em) {
 		super(em);
@@ -79,7 +79,7 @@ public class ProductRepository extends QueryRepository<Product, ProductRepositor
 		return Params.class;
 	}
 
-	public interface Params extends QueryRepository.Params {
+	public interface Params extends BaseQueryRepository.Params {
 
 		void id(Long id);
 		void description_like(String description);
