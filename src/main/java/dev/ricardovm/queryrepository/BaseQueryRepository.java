@@ -90,6 +90,7 @@ public abstract class BaseQueryRepository<T, P extends QueryRepository.Params> i
 	 *         The resulting {@link Query} can be further used to retrieve query results,
 	 *         such as a list of entities or a single entity.
 	 */
+	@Override
 	public final Query<T> query(Consumer<P> query) {
 		P paramsImpl = ParamsGenerator.generateImplementation(queryParamsClass());
 		query.accept(paramsImpl);
