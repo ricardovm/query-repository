@@ -4,7 +4,7 @@
 
 	<groupId>dev.ricardovm</groupId>
 	<artifactId>query-repository</artifactId>
-	<version>0.2.0</version>
+	<version>0.2.1-SNAPSHOT</version>
 	<name>Query Repository</name>
 	<description>A Java library that simplifies working with JPA Criteria API</description>
 	<url>https://github.com/ricardovm/query-repository</url>
@@ -30,7 +30,7 @@
 		<connection>scm:git:git@github.com:ricardovm/query-repository.git</connection>
 		<developerConnection>scm:git:git@github.com:ricardovm/query-repository.git</developerConnection>
 		<url>https://github.com/ricardovm/query-repository</url>
-	  <tag>v0.2.0</tag>
+	  <tag>HEAD</tag>
   </scm>
 
 	<properties>
