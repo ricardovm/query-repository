@@ -43,8 +43,10 @@ public class ProductRepository extends BaseQueryRepository<Product, ProductRepos
 			Root<OrderItem> subRoot = subquery.from(OrderItem.class);
 
 			subquery.select(ctx.criteriaBuilder().literal(1))
-				.where(ctx.criteriaBuilder().greaterThanOrEqualTo(subRoot.get("quantity"), minimumQuantity),
-					ctx.criteriaBuilder().equal(subRoot.get("product"), ctx.root()));
+				.where(
+					ctx.criteriaBuilder().greaterThanOrEqualTo(subRoot.get("quantity"), minimumQuantity),
+					ctx.criteriaBuilder().equal(subRoot.get("product").get("id"), ctx.root().get("id"))
+				);
 
 			return ctx.criteriaBuilder().exists(subquery);
 		});
@@ -57,9 +59,11 @@ public class ProductRepository extends BaseQueryRepository<Product, ProductRepos
 			Root<OrderItem> subRoot = subquery.from(OrderItem.class);
 
 			subquery.select(ctx.criteriaBuilder().literal(1))
-				.where(ctx.criteriaBuilder().equal(subRoot.get("product"), ctx.root()),
+				.where(
+					ctx.criteriaBuilder().equal(subRoot.get("product").get("id"), ctx.root().get("id")),
 					ctx.criteriaBuilder().equal(subRoot.get("quantity"), quantity),
-					ctx.criteriaBuilder().equal(subRoot.get("unitPrice"), price));
+					ctx.criteriaBuilder().equal(subRoot.get("unitPrice"), price)
+				);
 
 			return ctx.criteriaBuilder().exists(subquery);
 		});

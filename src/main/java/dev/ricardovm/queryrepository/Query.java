@@ -112,12 +112,15 @@ public class Query<T> {
 		}
 
 		Selection selectField = root;
-		root.alias("this_");
 		if (fetchField != null) {
 			selectField = fetchEntity(criteriaQuery, root, fetchField);
 		}
 
-		criteriaQuery.select(selectField).where(predicates.toArray(new Predicate[0]));
+		if (!predicates.isEmpty()) {
+			criteriaQuery.where(predicates.toArray(new Predicate[0]));
+		}
+
+		criteriaQuery.select(selectField);
 
 		var orders = new ArrayList<Order>();
 
@@ -153,20 +156,14 @@ public class Query<T> {
 		var fields = fetchField.split("\\.");
 		var currentRoot = (From) root;
 
-		var alias = "_";
-
 		for (var i = 0; i < fields.length - 1; i++) {
 			var field = fields[i];
 			var fetchItem = currentRoot.join(field);
-			alias += field + "_";
-			fetchItem.alias(alias);
 			currentRoot = fetchItem;
 		}
 
 		var field = fields[fields.length - 1];
-		var fetchItem = (Join) currentRoot.fetch(field, JoinType.INNER);
-		alias += field + "_";
-		fetchItem.alias(alias);
+		currentRoot.fetch(field, JoinType.INNER);
 
 		return currentRoot;
 	}
@@ -229,6 +226,8 @@ public class Query<T> {
 			throw new IllegalStateException("Custom operation not found for filter entry: " +
 				filterEntry.field());
 		}
+
+		criteriaQuery.select(root);
 
 		var queryContext = new QueryContext(criteriaBuilder, criteriaQuery, root);
 		return filterEntry.customOperation().apply(queryContext, value);
