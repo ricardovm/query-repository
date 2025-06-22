@@ -2,8 +2,8 @@ package dev.ricardovm.queryrepository.domain;
 
 import dev.ricardovm.queryrepository.BaseQueryRepository;
 import dev.ricardovm.queryrepository.QueryRepository;
+import jakarta.persistence.EntityManager;
 
-import javax.persistence.EntityManager;
 import java.util.List;
 
 public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.Params> {

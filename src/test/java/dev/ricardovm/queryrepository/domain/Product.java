@@ -15,7 +15,8 @@
  */
 package dev.ricardovm.queryrepository.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 
 @Entity

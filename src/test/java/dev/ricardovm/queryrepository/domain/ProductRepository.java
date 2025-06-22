@@ -18,10 +18,10 @@ package dev.ricardovm.queryrepository.domain;
 import dev.ricardovm.queryrepository.BaseQueryRepository;
 import dev.ricardovm.queryrepository.QueryRepository;
 import dev.ricardovm.queryrepository.SortOrder;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Subquery;
 import java.math.BigDecimal;
 
 public class ProductRepository extends BaseQueryRepository<Product, ProductRepository.Params> {

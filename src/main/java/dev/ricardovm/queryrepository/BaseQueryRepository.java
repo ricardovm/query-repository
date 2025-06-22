@@ -15,7 +15,8 @@
  */
 package dev.ricardovm.queryrepository;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;

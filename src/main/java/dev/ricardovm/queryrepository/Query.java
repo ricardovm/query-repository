@@ -15,9 +15,10 @@
  */
 package dev.ricardovm.queryrepository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
+
 import java.util.*;
 
 /**

@@ -15,7 +15,8 @@
  */
 package dev.ricardovm.queryrepository.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

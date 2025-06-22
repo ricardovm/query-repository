@@ -15,7 +15,7 @@
  */
 package dev.ricardovm.queryrepository;
 
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Predicate;
 
 /**
  * Represents a functional interface for defining custom operations
