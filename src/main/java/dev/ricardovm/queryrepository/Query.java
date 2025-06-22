@@ -78,12 +78,11 @@ public class Query<T> {
 	public List<T> list() {
 		var resultList = buildQuery(null).getResultList();
 
-		for (var entry : filterValues.entrySet()) {
-			if (!fetchEntries.containsKey(entry.getKey())) continue;
-
-			var fetchEntry = fetchEntries.get(entry.getKey());
-			buildQuery(fetchEntry).getResultList();
-		}
+		filterValues.keySet().stream()
+			.filter(fetchEntries::containsKey)
+			.sorted()
+			.map(fetchEntries::get)
+			.forEach(fetchEntry -> buildQuery(fetchEntry).getResultList());
 
 		return resultList;
 	}
@@ -154,18 +153,20 @@ public class Query<T> {
 		criteriaQuery.distinct(true);
 
 		var fields = fetchField.split("\\.");
-		var currentRoot = (From) root;
 
-		for (var i = 0; i < fields.length - 1; i++) {
-			var field = fields[i];
-			var fetchItem = currentRoot.join(field);
-			currentRoot = fetchItem;
+		Fetch<?, ?> currentFetch = null;
+		From<?, ?> currentFrom = root;
+
+		for (int i = 0; i < fields.length; i++) {
+			String field = fields[i];
+			if (currentFetch == null) {
+				currentFetch = currentFrom.fetch(field, JoinType.INNER);
+			} else {
+				currentFetch = currentFetch.fetch(field, JoinType.INNER);
+			}
 		}
 
-		var field = fields[fields.length - 1];
-		currentRoot.fetch(field, JoinType.INNER);
-
-		return currentRoot;
+		return root;
 	}
 
 	private Predicate createOperationPredicate(Root<T> root, HashMap<String, Join> joins, FilterEntry filterEntry, Object value) {
