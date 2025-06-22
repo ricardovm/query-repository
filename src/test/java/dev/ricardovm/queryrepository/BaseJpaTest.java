@@ -33,7 +33,7 @@ public abstract class BaseJpaTest {
 	public static void setupClass() {
 		var properties = new HashMap<String, String>();
 
-		properties.put("javax.persistence.sql-load-script-source", "test-data.sql");
+		properties.put("jakarta.persistence.sql-load-script-source", "test-data.sql");
 
 		emf = Persistence.createEntityManagerFactory("test-persistence-unit", properties);
 	}
