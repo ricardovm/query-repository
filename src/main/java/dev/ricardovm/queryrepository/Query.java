@@ -76,15 +76,13 @@ public class Query<T> {
 	 *         list if no results are found.
 	 */
 	public List<T> list() {
-		var resultList = buildQuery(null).getResultList();
-
 		filterValues.keySet().stream()
 			.filter(fetchEntries::containsKey)
 			.sorted()
 			.map(fetchEntries::get)
 			.forEach(fetchEntry -> buildQuery(fetchEntry).getResultList());
 
-		return resultList;
+		return buildQuery(null).getResultList();
 	}
 
 	private TypedQuery<T> buildQuery(String fetchField) {
