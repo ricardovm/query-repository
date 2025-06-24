@@ -38,7 +38,7 @@ class ParamsGenerator {
 		throw new IllegalArgumentException("Parameter not supported: " + params.getClass());
 	}
 
-	private interface ParamsValues {
+	public interface ParamsValues {
 
 		Map<String, Object> paramsValues();
 	}
