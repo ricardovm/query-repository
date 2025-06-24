@@ -85,28 +85,15 @@ public class Query<T> {
 		return buildQuery(null).getResultList();
 	}
 
-	private TypedQuery<T> buildQuery(String fetchField) {
-		var predicates = new ArrayList<Predicate>();
-		var joins = new HashMap<String, Join>();
+	public long count() {
+		return buildCountQuery().getSingleResult();
+	}
 
+	private TypedQuery<T> buildQuery(String fetchField) {
 		var criteriaQuery = criteriaBuilder.createQuery(entityClass);
 		var root = criteriaQuery.from(entityClass);
 
-		for (var entry : filterValues.entrySet()) {
-			if (fetchEntries.containsKey(entry.getKey())) continue;
-			if (sortEntries.containsKey(entry.getKey())) continue;
-
-			var filterEntry = filterEntries.get(entry.getKey());
-			if (filterEntry == null) {
-				throw new IllegalStateException("Query entry '" + entry.getKey() + "' not found");
-			}
-
-			if (filterEntry.operation() != null) {
-				predicates.add(createOperationPredicate(root, joins, filterEntry, entry.getValue()));
-			} else {
-				predicates.add(addCustomOperation(criteriaQuery, root, filterEntry, entry.getValue()));
-			}
-		}
+		var predicates = buildPredicates(root, criteriaQuery);
 
 		Selection selectField = root;
 		if (fetchField != null) {
@@ -145,6 +132,44 @@ public class Query<T> {
 		}
 
 		return entityManager.createQuery(criteriaQuery);
+	}
+
+	private TypedQuery<Long> buildCountQuery() {
+		var criteriaQuery = criteriaBuilder.createQuery(Long.class);
+		var root = criteriaQuery.from(entityClass);
+
+		var predicates = buildPredicates(root, criteriaQuery);
+
+		criteriaQuery.select(criteriaBuilder.count(root));
+		if (!predicates.isEmpty()) {
+			criteriaQuery.where(predicates.toArray(new Predicate[0]));
+		}
+
+		return entityManager.createQuery(criteriaQuery);
+	}
+
+	private List<Predicate> buildPredicates(Root<T> root, CriteriaQuery<?> criteriaQuery) {
+		var predicates = new ArrayList<Predicate>();
+		var joins = new HashMap<String, Join>();
+
+		for (var entry : filterValues.entrySet()) {
+			if (fetchEntries.containsKey(entry.getKey())) continue;
+			if (sortEntries.containsKey(entry.getKey())) continue;
+
+			var filterEntry = filterEntries.get(entry.getKey());
+			if (filterEntry == null) {
+				throw new IllegalStateException("Query entry '" + entry.getKey() + "' not found");
+			}
+
+			if (filterEntry.operation() != null) {
+				predicates.add(createOperationPredicate(root, joins, filterEntry, entry.getValue()));
+			} else {
+				predicates.add(addCustomOperation(
+					(CriteriaQuery<T>) criteriaQuery, root, filterEntry, entry.getValue()));
+			}
+		}
+
+		return predicates;
 	}
 
 	private Selection<?> fetchEntity(CriteriaQuery<T> criteriaQuery, Root<T> root, String fetchField) {

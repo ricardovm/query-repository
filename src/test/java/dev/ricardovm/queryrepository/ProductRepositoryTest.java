@@ -165,4 +165,14 @@ class ProductRepositoryTest extends BaseJpaTest {
 		assertEquals("Headphones", products.get(0).getName());
 		assertEquals("Smartphone", products.get(1).getName());
 	}
+
+	@Test
+	void testCountWithJoin() {
+		var productRepository = new ProductRepository(em);
+		var productsCount = productRepository.query(f -> {
+			f.categoryName("Electronics");
+		}).count();
+
+		assertEquals(3, productsCount);
+	}
 }
