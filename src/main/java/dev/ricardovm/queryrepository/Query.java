@@ -85,6 +85,12 @@ public class Query<T> {
 		return buildQuery(null).getResultList();
 	}
 
+	/**
+	 * Calculates the total number of entities that match the specified filters
+	 * and criteria in the query.
+	 *
+	 * @return the total count of entities as a long value
+	 */
 	public long count() {
 		return buildCountQuery().getSingleResult();
 	}
