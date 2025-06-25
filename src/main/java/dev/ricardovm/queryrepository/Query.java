@@ -146,7 +146,7 @@ public class Query<T> {
 
 		var predicates = buildPredicates(root, criteriaQuery);
 
-		criteriaQuery.select(criteriaBuilder.count(root));
+		criteriaQuery.select(criteriaBuilder.countDistinct(root));
 		if (!predicates.isEmpty()) {
 			criteriaQuery.where(predicates.toArray(new Predicate[0]));
 		}
