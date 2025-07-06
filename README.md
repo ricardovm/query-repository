@@ -94,18 +94,81 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
 
     public interface Params extends QueryRepository.Params {
         void status(String status);
-
         void status_in(List<String> statuses);
-
         void fetchItems();
-
         void fetchItemsProduct();
-
         void sortById();
-
         void sortByDate(SortOrder sortOrder);
-
         void sortByTotal_desc();
+    }
+}
+```
+
+#### For Spring Boot repositories
+
+If you are using Spring Boot, you can create a custom repository interface that extends `QueryRepository`:
+
+```java
+// OrderRepository.java
+public interface OrderRepository extends JpaRepository<Order, Long>, OrderQueryRepository {
+
+    interface Params extends QueryRepository.Params {
+        void status(String status);
+        void status_in(List<String> statuses);
+        void customerName(String customerName);
+        void fetchItems();
+        void fetchItemsProduct();
+    }
+}
+
+interface OrderQueryRepository extends QueryRepository<Order, OrderRepository.Params> {
+}
+
+class OrderQueryRepositoryImpl extends BaseQueryRepository<Order, OrderRepository.Params> implements OrderQueryRepository {
+
+    public OrderQueryRepositoryImpl(EntityManager em) {
+        super(em);
+    }
+
+    @Override
+    protected void buildCriteria() {
+        addFilter(OrderRepository.Params::status);
+        addFilter(OrderRepository.Params::status_in);
+        addFilter(OrderRepository.Params::customerName, "customer.name");
+
+        addEntityFetch(OrderRepository.Params::fetchItems);
+        addEntityFetch(OrderRepository.Params::fetchItemsProduct, "items.product");
+    }
+
+    @Override
+    protected Class<Order> entityClass() {
+        return Order.class;
+    }
+
+    @Override
+    protected Class<OrderRepository.Params> queryParamsClass() {
+        return OrderRepository.Params.class;
+    }
+}
+```
+
+Then, you can inject this repository into your services:
+
+```java
+@Service
+public class OrderService {
+
+    private final OrderQueryRepository orderQueryRepository;
+
+    public OrderService(OrderQueryRepository orderQueryRepository) {
+        this.orderQueryRepository = orderQueryRepository;
+    }
+
+    public List<Order> findShippedOrders() {
+        return orderQueryRepository.query(q -> {
+            q.status("SHIPPED");
+            q.fetchItems();
+        }).list();
     }
 }
 ```
