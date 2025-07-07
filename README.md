@@ -30,7 +30,7 @@ Add the following dependency to your Maven project:
 | Version | JPA 3.x | Jakarta EE 9+ | Spring Boot 3.x | JPA 2.x | Java EE 8 | Spring Boot 2.x |
 |---------|---------|---------------|-----------------|---------|-----------|-----------------|
 | 0.3.0   | ✅      | ✅            | ✅              | ❌      | ❌        | ❌              |
-| 0.2.1   | ❌      | ❌            | ❌              | ✅      | ✅        | ✅              |
+| 0.2.0   | ❌      | ❌            | ❌              | ✅      | ✅        | ✅              |
 
 If you are using JPA2, check [jpa2 branch](https://github.com/ricardovm/query-repository/tree/jpa2) of this repository.
 
