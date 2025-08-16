@@ -32,7 +32,7 @@ public class QueryContext {
 	private final CriteriaQuery<?> criteriaQuery;
 	private final Root<?> root;
 
-	public QueryContext(CriteriaBuilder criteriaBuilder, CriteriaQuery<?> criteriaQuery, Root<?> root) {
+	QueryContext(CriteriaBuilder criteriaBuilder, CriteriaQuery<?> criteriaQuery, Root<?> root) {
 		this.criteriaBuilder = criteriaBuilder;
 		this.criteriaQuery = criteriaQuery;
 		this.root = root;
