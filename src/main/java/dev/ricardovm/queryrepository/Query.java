@@ -42,7 +42,7 @@ public class Query<T> {
 	private final CriteriaBuilder criteriaBuilder;
 
 	Query(Class<T> entityClass, EntityManager entityManager, Map<String, FilterEntry> filterEntries,
-	      Map<String, Object> filterValues, Map<String, String> fetchEntries, Map<String, SortEntry> sortEntries) {
+		  Map<String, Object> filterValues, Map<String, String> fetchEntries, Map<String, SortEntry> sortEntries) {
 		this.entityClass = entityClass;
 		this.entityManager = entityManager;
 		this.filterEntries = filterEntries;

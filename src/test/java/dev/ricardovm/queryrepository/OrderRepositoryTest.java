@@ -15,9 +15,14 @@
  */
 package dev.ricardovm.queryrepository;
 
+import dev.ricardovm.queryrepository.domain.Order;
 import dev.ricardovm.queryrepository.domain.OrderRepository;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,4 +86,44 @@ class OrderRepositoryTest extends BaseJpaTest {
 		assertEquals(2, order.getItems().size());
 		assertEquals("Laptop", order.getItems().get(0).getProduct().getName());
 	}
+
+	@Test
+	void testDifferentClassLoadersForInstantiationAndExecution() throws Exception {
+		var orderRepository = new OrderRepository(em);
+
+		var testClassesDir = new File("target/test-classes").toURI().toURL();
+		var classesDir = new File("target/classes").toURI().toURL();
+
+		var customClassLoader = new URLClassLoader(new URL[]{testClassesDir, classesDir}, getClass().getClassLoader()) {
+			@Override
+			public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+				if (name.equals("dev.ricardovm.queryrepository.RepositoryRunner") ||
+					name.equals("dev.ricardovm.queryrepository.domain.OrderRepository$Params")) {
+					synchronized (getClassLoadingLock(name)) {
+						Class<?> c = findLoadedClass(name);
+						if (c == null) {
+							c = findClass(name);
+	                    }
+                        if (resolve) {
+                            resolveClass(c);
+                        }
+                        return c;
+                    }
+                }
+                return super.loadClass(name, resolve);
+            }
+        };
+
+        var runnerClass = customClassLoader.loadClass("dev.ricardovm.queryrepository.RepositoryRunner");
+        var runner = runnerClass.getDeclaredConstructor().newInstance();
+        
+        var method = runnerClass.getMethod("run", OrderRepository.class);
+        
+        try {
+            var orders = (List<Order>) method.invoke(runner, orderRepository);
+            assertEquals(2, orders.size());
+        } catch (InvocationTargetException e) {
+            throw (Exception) e.getCause();
+        }
+    }
 }

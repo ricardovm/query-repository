@@ -22,11 +22,23 @@ class ParamsGenerator {
 
 	@SuppressWarnings("unchecked")
 	static <T extends QueryRepository.Params> T generateImplementation(Class<T> clazz) {
+		return generateImplementation(clazz, clazz.getClassLoader());
+	}
+
+	@SuppressWarnings("unchecked")
+	static <T extends QueryRepository.Params> T generateImplementation(Class<T> clazz, ClassLoader classLoader) {
 		var handler = new FilterInvocationHandler();
 
+		Class<?> targetInterface;
+		try {
+			targetInterface = classLoader.loadClass(clazz.getName());
+		} catch (ClassNotFoundException e) {
+			throw new IllegalArgumentException("Failed to load class: " + clazz.getName(), e);
+		}
+
 		return (T) Proxy.newProxyInstance(
-				clazz.getClassLoader(),
-				new Class<?>[]{clazz, ParamsValues.class},
+				classLoader,
+				new Class<?>[]{targetInterface, ParamsValues.class},
 				handler);
 	}
 
