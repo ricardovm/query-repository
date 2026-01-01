@@ -93,7 +93,7 @@ public abstract class BaseQueryRepository<T, P extends QueryRepository.Params> i
 	 */
 	@Override
 	public final Query<T> query(Consumer<P> query) {
-		P paramsImpl = ParamsGenerator.generateImplementation(queryParamsClass());
+		P paramsImpl = ParamsGenerator.generateImplementation(queryParamsClass(), query.getClass().getClassLoader());
 		query.accept(paramsImpl);
 		var paramsValues = ParamsGenerator.values(paramsImpl);
 
