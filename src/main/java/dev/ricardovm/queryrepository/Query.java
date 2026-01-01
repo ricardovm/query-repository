@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Ricardo Vaz Mannrich
+ * Copyright 2026 Ricardo Vaz Mannrich
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,15 +58,15 @@ public class Query<T> {
 	 * @return an {@link Optional} containing the first result if it exists,
 	 *         or an empty {@link Optional} if the result list is empty.
 	 */
-	public Optional<T> get() {
-		var results = buildQuery(null).setMaxResults(1).getResultList();
+    public Optional<T> get() {
+        filterValues.keySet().stream()
+                .filter(fetchEntries::containsKey)
+                .sorted()
+                .map(fetchEntries::get)
+                .forEach(fetchEntry -> buildQuery(fetchEntry).setMaxResults(1).getResultList());
 
-		if (results.isEmpty()) {
-			return Optional.empty();
-		}
-
-		return Optional.of(results.get(0));
-	}
+        return buildQuery(null).setMaxResults(1).getResultList().stream().findFirst();
+    }
 
 	/**
 	 * Executes the query built based on the applied filters and criteria,

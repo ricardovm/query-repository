@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OrderRepositoryTest extends BaseJpaTest {
 
@@ -81,4 +82,24 @@ class OrderRepositoryTest extends BaseJpaTest {
 		assertEquals(2, order.getItems().size());
 		assertEquals("Laptop", order.getItems().get(0).getProduct().getName());
 	}
+
+    @Test
+    void testLoadRelatedEntitiesOnSingleResult() {
+        var orderRepository = new OrderRepository(em);
+        var orderOption = orderRepository.query(f -> {
+            f.id(1L);
+            f.fetchItems();
+            f.fetchItemsProduct();
+        }).get();
+
+        em.clear();
+
+        assertTrue(orderOption.isPresent());
+
+        var order = orderOption.get();
+        assertEquals(1L, order.getId());
+        assertEquals(2, order.getItems().size());
+        assertEquals("Laptop", order.getItems().get(0).getProduct().getName());
+        assertEquals("Headphones", order.getItems().get(1).getProduct().getName());
+    }
 }
