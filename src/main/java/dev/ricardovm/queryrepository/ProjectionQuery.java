@@ -128,6 +128,19 @@ public class ProjectionQuery<T> {
 		var cq = state.criteriaBuilder.createQuery(state.entityClass);
 		var root = cq.from(state.entityClass);
 		applyPredicatesAndSort(cq, root);
+
+		for (var column : columns) {
+			if (column.contains(".")) continue;
+
+			try {
+				var attr = root.getModel().getAttribute(column);
+				if (isEntityAssociation(attr)) {
+					root.fetch(column, JoinType.LEFT);
+				}
+			} catch (IllegalArgumentException ignored) {
+			}
+		}
+
 		cq.select(root);
 
 		return state.entityManager.createQuery(cq);

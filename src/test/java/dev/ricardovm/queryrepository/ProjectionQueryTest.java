@@ -192,6 +192,46 @@ class ProjectionQueryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testMapResult_mixedColumnTypes() {
+		var repo = new OrderRepository(em);
+		var results = repo.query(f -> f.id(1L))
+			.columns("id", "customer", "items")
+			.list();
+
+		em.clear();
+
+		assertEquals(1, results.size());
+		var result = results.get(0);
+		assertEquals(1L, result.get("id"));
+		assertEquals("John Doe", ((Customer) result.get("customer")).getName());
+		assertEquals(2, ((List<?>) result.get("items")).size());
+	}
+
+	@Test
+	void testTypedResult_getWithCollection() {
+		var repo = new OrderRepository(em);
+		var result = repo.query(f -> f.id(1L))
+			.columns(OrderWithItemsResult.class, "id", "items")
+			.get();
+
+		em.clear();
+
+		assertTrue(result.isPresent());
+		assertEquals(1L, result.get().getId());
+		assertEquals(2, result.get().getItems().size());
+	}
+
+	@Test
+	void testMapResult_collectionGetEmpty() {
+		var repo = new OrderRepository(em);
+		var result = repo.query(f -> f.id(999L))
+			.columns("id", "items")
+			.get();
+
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
 	void testTypedResult_withCollection() {
 		var repo = new OrderRepository(em);
 		List<OrderWithItemsResult> results = repo.query(f -> f.id(1L))

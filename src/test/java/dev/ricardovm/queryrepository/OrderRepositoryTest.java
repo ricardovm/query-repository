@@ -109,6 +109,67 @@ class OrderRepositoryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testFetchItemsOnly() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> {
+			f.id(1L);
+			f.fetchItems();
+		}).list();
+
+		em.clear();
+
+		assertEquals(1, orders.size());
+		assertEquals(2, orders.get(0).getItems().size());
+	}
+
+	@Test
+	void testFetchWithSort() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.fetchItems();
+			f.fetchItemsProduct();
+			f.sortById_desc();
+		}).list();
+
+		em.clear();
+
+		assertEquals(2, orders.size());
+		assertEquals(3L, orders.get(0).getId());
+		assertEquals(3, orders.get(0).getItems().size());
+		assertEquals("Monitor", orders.get(0).getItems().get(0).getProduct().getName());
+		assertEquals(1L, orders.get(1).getId());
+		assertEquals(2, orders.get(1).getItems().size());
+		assertEquals("Laptop", orders.get(1).getItems().get(0).getProduct().getName());
+	}
+
+	@Test
+	void testFetchOnEmptyGet() {
+		var orderRepository = new OrderRepository(em);
+		var result = orderRepository.query(f -> {
+			f.id(999L);
+			f.fetchItems();
+			f.fetchItemsProduct();
+		}).get();
+
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	void testFetchWithNoFilter() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> f.fetchItems()).list();
+
+		em.clear();
+
+		assertEquals(4, orders.size());
+		var order1 = orders.stream().filter(o -> o.getId().equals(1L)).findFirst().orElseThrow();
+		assertEquals(2, order1.getItems().size());
+		var order4 = orders.stream().filter(o -> o.getId().equals(4L)).findFirst().orElseThrow();
+		assertTrue(order4.getItems().isEmpty());
+	}
+
+	@Test
 	void testDifferentClassLoadersForInstantiationAndExecution() throws Exception {
 		var orderRepository = new OrderRepository(em);
 
@@ -119,7 +180,7 @@ class OrderRepositoryTest extends BaseJpaTest {
 			@Override
 			public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 				if (name.equals("dev.ricardovm.queryrepository.RepositoryRunner") ||
-						name.equals("dev.ricardovm.queryrepository.domain.OrderRepository$Params")) {
+					name.equals("dev.ricardovm.queryrepository.domain.OrderRepository$Params")) {
 					synchronized (getClassLoadingLock(name)) {
 						Class<?> c = findLoadedClass(name);
 						if (c == null) {
