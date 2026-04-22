@@ -14,7 +14,7 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
 
 	@Override
 	protected void buildCriteria() {
-        addFilter(Params::id);
+		addFilter(Params::id);
 		addFilter(Params::status);
 		addFilter(Params::status_in);
 		addFilter(Params::customerName, "customer.name");
@@ -37,11 +37,15 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
 
 	public interface Params extends QueryRepository.Params {
 		void id(Long id);
-        void status(String status);
+
+		void status(String status);
+
 		void status_in(List<String> statuses);
+
 		void customerName(String customerName);
 
 		void fetchItems();
+
 		void fetchItemsProduct();
 
 		void sortById_desc();
