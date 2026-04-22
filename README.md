@@ -10,6 +10,7 @@ This is still a work in progress, but this release is already usable and provide
 - Automatic filter generation based on method naming conventions
 - Support for complex filtering operations (equals, greater than, less than, like, contains, etc.)
 - Easy fetching of related entities
+- Projection queries returning a subset of columns as `Map<String, Object>` or a typed POJO
 - Fluent API for building and executing queries
 - No external dependencies beyond JPA
 
@@ -193,6 +194,62 @@ Optional<Order> order = orderRepository.query(q -> {
 }).get();
 ```
 
+## Projections
+
+Instead of loading full entities, you can select a subset of columns using `.columns(...)` on a `Query`. Each call returns a `ProjectionQuery<T>` with the same `list()` and `get()` executors.
+
+### Map result (no type specified)
+
+Each row is returned as `Map<String, Object>` keyed exactly by the column name passed to `.columns(...)`:
+
+```java
+List<Map<String, Object>> rows = orderRepository.query(q -> {
+    q.status("SHIPPED");
+}).columns("id", "orderDate").list();
+
+Long id = (Long) rows.get(0).get("id");
+```
+
+### Typed result
+
+Pass a class as the first argument and each row is constructed via its matching constructor, with columns supplied in declaration order:
+
+```java
+public class OrderSummary {
+    private final Long id;
+    private final Instant orderDate;
+    private final Customer customer;
+
+    public OrderSummary(Long id, Instant orderDate, Customer customer) { ... }
+    // getters
+}
+
+List<OrderSummary> summaries = orderRepository.query(q -> {
+    q.status("SHIPPED");
+}).columns(OrderSummary.class, "id", "orderDate", "customer").list();
+```
+
+### Column path syntax
+
+| Column string     | What is selected                                                  |
+|-------------------|-------------------------------------------------------------------|
+| `"id"`            | Scalar field on the root entity                                   |
+| `"customer"`      | Full associated entity (`@ManyToOne` / `@OneToOne`); auto-joined  |
+| `"customer.name"` | Scalar field reached via an association                           |
+
+Entity associations are resolved via a `LEFT JOIN`, so they are fully initialized and accessible even after the persistence context is cleared — no explicit `fetchX()` param is needed.
+
+### Combining with sort
+
+Sort params applied before `.columns(...)` take effect on the projection query:
+
+```java
+List<Map<String, Object>> rows = orderRepository.query(q -> {
+    q.status_in(List.of("SHIPPED", "COMPLETED"));
+    q.sortByDate_desc();
+}).columns("id", "status", "orderDate").list();
+```
+
 ## Filter Naming Conventions
 
 The library supports automatic operation detection based on method name suffixes:
@@ -273,6 +330,7 @@ This example demonstrates a custom operation that uses a subquery to find produc
 
 - It's not possible to use primitive parameters in filter methods. Always use their wrapper classes (e.g., `Integer` instead of `int`, `Long` instead of `long`).
 - No support for `@ElementCollection` or `@ManyToMany` relationships yet.
+- Projection via `.columns(...)` does not support `@OneToMany` or `@ManyToMany` associations as columns. Use entity-level fetch params and return full entities in those cases.
 
 ## License
 
