@@ -21,7 +21,7 @@ Add the following dependency to your Maven project:
 <dependency>
     <groupId>dev.ricardovm</groupId>
     <artifactId>query-repository</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ Add the following dependency to your Maven project:
 
 | Version | JPA 3.x | Jakarta EE 9+ | Spring Boot 3.x | JPA 2.x | Java EE 8 | Spring Boot 2.x |
 |---------|---------|---------------|-----------------|---------|-----------|-----------------|
-| 0.3.0   | ✅      | ✅            | ✅              | ❌      | ❌        | ❌              |
+| 0.3.1   | ✅      | ✅            | ✅              | ❌      | ❌        | ❌              |
 | 0.2.0   | ❌      | ❌            | ❌              | ✅      | ✅        | ✅              |
 
 If you are using JPA2, check [jpa2 branch](https://github.com/ricardovm/query-repository/tree/jpa2) of this repository.
@@ -88,7 +88,7 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
     }
 
     @Override
-    protected Class<Params> paramsClass() {
+    protected Class<Params> queryParamsClass() {
         return Params.class;
     }
 
