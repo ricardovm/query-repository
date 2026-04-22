@@ -15,6 +15,7 @@ INSERT INTO products (id, name, description, price, category_id) VALUES (5, 'Mon
 INSERT INTO orders (id, customer_id, order_date, status) VALUES (1, 1, '2023-01-15 10:30:00', 'COMPLETED');
 INSERT INTO orders (id, customer_id, order_date, status) VALUES (2, 2, '2023-02-20 14:45:00', 'PROCESSING');
 INSERT INTO orders (id, customer_id, order_date, status) VALUES (3, 3, '2023-03-05 09:15:00', 'SHIPPED');
+INSERT INTO orders (id, customer_id, order_date, status) VALUES (4, 2, '2023-04-01 08:00:00', 'PENDING');
 
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (1, 1, 1, 1, 1299.99);
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price) VALUES (2, 1, 3, 1, 199.99);

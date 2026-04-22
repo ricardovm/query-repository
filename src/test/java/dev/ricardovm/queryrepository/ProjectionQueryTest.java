@@ -1,8 +1,6 @@
 package dev.ricardovm.queryrepository;
 
-import dev.ricardovm.queryrepository.domain.Customer;
-import dev.ricardovm.queryrepository.domain.OrderRepository;
-import dev.ricardovm.queryrepository.domain.OrderResult;
+import dev.ricardovm.queryrepository.domain.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -147,5 +145,64 @@ class ProjectionQueryTest extends BaseJpaTest {
 
 		assertTrue(result.isPresent());
 		assertEquals(3L, result.get().getId());
+	}
+
+	@Test
+	void testMapResult_oneToManyCollection() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> f.id(1L))
+			.columns("id", "items")
+			.list();
+
+		em.clear();
+
+		assertEquals(1, results.size());
+		var result = results.get(0);
+		assertEquals(1L, result.get("id"));
+		var items = (List<OrderItem>) result.get("items");
+		assertEquals(2, items.size());
+	}
+
+	@Test
+	void testMapResult_collectionWithSort() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).columns("id", "items").list();
+
+		assertEquals(2, results.size());
+		assertEquals(3L, results.get(0).get("id"));
+		assertEquals(1L, results.get(1).get("id"));
+		assertEquals(3, ((List<?>) results.get(0).get("items")).size());
+		assertEquals(2, ((List<?>) results.get(1).get("items")).size());
+	}
+
+	@Test
+	void testMapResult_emptyCollection() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> f.id(4L))
+			.columns("id", "items")
+			.list();
+
+		assertEquals(1, results.size());
+		var items = (List<?>) results.get(0).get("items");
+		assertNotNull(items);
+		assertTrue(items.isEmpty());
+	}
+
+	@Test
+	void testTypedResult_withCollection() {
+		var repo = new OrderRepository(em);
+		List<OrderWithItemsResult> results = repo.query(f -> f.id(1L))
+			.columns(OrderWithItemsResult.class, "id", "items")
+			.list();
+
+		em.clear();
+
+		assertEquals(1, results.size());
+		var result = results.get(0);
+		assertEquals(1L, result.getId());
+		assertEquals(2, result.getItems().size());
 	}
 }

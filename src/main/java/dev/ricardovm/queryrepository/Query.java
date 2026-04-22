@@ -17,9 +17,12 @@ package dev.ricardovm.queryrepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.Predicate;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Represents a query builder class that facilitates dynamic query creation
@@ -46,13 +49,9 @@ public class Query<T> {
 	 * or an empty {@link Optional} if the result list is empty.
 	 */
 	public Optional<T> get() {
-		state.filterValues.keySet().stream()
-			.filter(state.fetchEntries::containsKey)
-			.sorted()
-			.map(state.fetchEntries::get)
-			.forEach(fetchEntry -> buildQuery(fetchEntry).setMaxResults(1).getResultList());
+		state.warmCollections(activatedFetchPaths());
 
-		return buildQuery(null).setMaxResults(1).getResultList().stream().findFirst();
+		return buildQuery().setMaxResults(1).getResultList().stream().findFirst();
 	}
 
 	/**
@@ -63,13 +62,17 @@ public class Query<T> {
 	 * list if no results are found.
 	 */
 	public List<T> list() {
-		state.filterValues.keySet().stream()
+		state.warmCollections(activatedFetchPaths());
+
+		return buildQuery().getResultList();
+	}
+
+	private List<String> activatedFetchPaths() {
+		return state.filterValues.keySet().stream()
 			.filter(state.fetchEntries::containsKey)
 			.sorted()
 			.map(state.fetchEntries::get)
-			.forEach(fetchEntry -> buildQuery(fetchEntry).getResultList());
-
-		return buildQuery(null).getResultList();
+			.collect(Collectors.toList());
 	}
 
 	/**
@@ -106,22 +109,16 @@ public class Query<T> {
 		return new ProjectionQuery<>(state, type, columns);
 	}
 
-	private TypedQuery<T> buildQuery(String fetchField) {
+	private TypedQuery<T> buildQuery() {
 		var criteriaQuery = state.criteriaBuilder.createQuery(state.entityClass);
 		var root = criteriaQuery.from(state.entityClass);
 
 		var predicates = state.buildPredicates(root, criteriaQuery);
-
-		Selection selectField = root;
-		if (fetchField != null) {
-			selectField = fetchEntity(criteriaQuery, root, fetchField);
-		}
-
 		if (!predicates.isEmpty()) {
 			criteriaQuery.where(predicates.toArray(new Predicate[0]));
 		}
 
-		criteriaQuery.select(selectField);
+		criteriaQuery.select(root);
 
 		var orders = state.buildSortOrders(root);
 		if (!orders.isEmpty()) {
@@ -145,22 +142,4 @@ public class Query<T> {
 		return state.entityManager.createQuery(criteriaQuery);
 	}
 
-	private Selection<?> fetchEntity(CriteriaQuery<T> criteriaQuery, Root<T> root, String fetchField) {
-		criteriaQuery.distinct(true);
-
-		var fields = fetchField.split("\\.");
-
-		Fetch<?, ?> currentFetch = null;
-		From<?, ?> currentFrom = root;
-
-		for (String field : fields) {
-			if (currentFetch == null) {
-				currentFetch = currentFrom.fetch(field, JoinType.INNER);
-			} else {
-				currentFetch = currentFetch.fetch(field, JoinType.INNER);
-			}
-		}
-
-		return root;
-	}
 }

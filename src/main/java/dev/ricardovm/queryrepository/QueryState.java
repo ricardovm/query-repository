@@ -16,6 +16,7 @@
 package dev.ricardovm.queryrepository;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 
 import java.util.*;
@@ -41,6 +42,32 @@ class QueryState<E> {
 		this.fetchEntries = fetchEntries;
 		this.sortEntries = sortEntries;
 		this.criteriaBuilder = entityManager.getCriteriaBuilder();
+	}
+
+	void warmCollections(List<String> paths) {
+		for (String path : paths) {
+			buildWarmupQuery(path).getResultList();
+		}
+	}
+
+	private TypedQuery<E> buildWarmupQuery(String fetchField) {
+		var cq = criteriaBuilder.createQuery(entityClass);
+		var root = cq.from(entityClass);
+		var predicates = buildPredicates(root, cq);
+
+		cq.distinct(true);
+		var fields = fetchField.split("\\.");
+		Fetch<?, ?> fetch = null;
+		for (String field : fields) {
+			fetch = (fetch == null) ? root.fetch(field, JoinType.LEFT) : fetch.fetch(field, JoinType.LEFT);
+		}
+
+		if (!predicates.isEmpty()) {
+			cq.where(predicates.toArray(new Predicate[0]));
+		}
+		cq.select(root);
+
+		return entityManager.createQuery(cq);
 	}
 
 	List<Predicate> buildPredicates(Root root, CriteriaQuery<?> criteriaQuery) {

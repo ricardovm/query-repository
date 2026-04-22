@@ -19,7 +19,9 @@ import jakarta.persistence.Tuple;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.ManagedType;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,14 @@ import java.util.stream.Collectors;
  *
  * <p>Entity associations listed as columns (e.g. {@code "customer"}) are resolved via a
  * LEFT JOIN so they are fully loaded and accessible after the persistence context is cleared.
+ *
+ * <p>{@code @OneToMany} and {@code @ManyToMany} collection associations (e.g. {@code "items"})
+ * are supported: a JOIN FETCH warm-up loads them into the persistence context, then the result
+ * is projected in Java. Column order must match the constructor parameter order for typed results.
+ *
+ * <p>Nested paths may only traverse {@code @ManyToOne} or {@code @OneToOne} associations.
+ * Paths through collection associations (e.g. {@code "items.product"}) are not yet supported
+ * and will throw {@link IllegalArgumentException}.
  *
  * @param <T> the result type ({@code Map<String, Object>} or a POJO class)
  */
@@ -51,12 +61,15 @@ public class ProjectionQuery<T> {
 	 * If a result type is specified, the query will return an instance of the specified type.
 	 * Otherwise, the query will return a map representing a row of column-value pairs.
 	 *
-	 * @return an {@code Optional} containing the result of the query. If a result type is
-	 * defined, the value will be an instance of that type. If no result type
-	 * is defined, the value will be a map where keys are column names and values
-	 * are their corresponding values. If no result is found, returns an empty {@code Optional}.
+	 * @return an {@code Optional} containing the result of the query, or empty if none found.
 	 */
 	public Optional<T> get() {
+		var collectionColumns = findCollectionColumns();
+		if (!collectionColumns.isEmpty()) {
+			state.warmCollections(collectionColumns);
+			return projectEntities(buildPlainEntityQuery().setMaxResults(1).getResultList()).stream().findFirst();
+		}
+
 		if (resultType != null) {
 			return buildTypedQuery().setMaxResults(1).getResultList().stream().findFirst();
 		}
@@ -73,11 +86,15 @@ public class ProjectionQuery<T> {
 	 * Otherwise, the query will return a list of maps, where each map corresponds to a row
 	 * with column names as keys and their respective values as values.
 	 *
-	 * @return a list containing the query results. If a result type is defined, the list contains
-	 * instances of that type. If no result type is defined, the list contains maps where each map
-	 * represents a row of column-value pairs.
+	 * @return a list containing the query results.
 	 */
 	public List<T> list() {
+		var collectionColumns = findCollectionColumns();
+		if (!collectionColumns.isEmpty()) {
+			state.warmCollections(collectionColumns);
+			return projectEntities(buildPlainEntityQuery().getResultList());
+		}
+
 		if (resultType != null) {
 			return buildTypedQuery().getResultList();
 		}
@@ -85,6 +102,88 @@ public class ProjectionQuery<T> {
 		return (List<T>) buildMapQuery().getResultList().stream()
 			.map(this::tupleToMap)
 			.collect(Collectors.toList());
+	}
+
+	private List<String> findCollectionColumns() {
+		var entityType = state.entityManager.getMetamodel().entity(state.entityClass);
+		var result = new ArrayList<String>();
+		for (var column : columns) {
+			if (column.contains(".")) continue;
+			try {
+				var attr = entityType.getAttribute(column);
+				var type = attr.getPersistentAttributeType();
+				if (type == Attribute.PersistentAttributeType.ONE_TO_MANY
+					|| type == Attribute.PersistentAttributeType.MANY_TO_MANY
+					|| type == Attribute.PersistentAttributeType.ELEMENT_COLLECTION) {
+					result.add(column);
+				}
+			} catch (IllegalArgumentException ignored) {
+			}
+		}
+
+		return result;
+	}
+
+	private TypedQuery buildPlainEntityQuery() {
+		var cq = state.criteriaBuilder.createQuery(state.entityClass);
+		var root = cq.from(state.entityClass);
+		applyPredicatesAndSort(cq, root);
+		cq.select(root);
+
+		return state.entityManager.createQuery(cq);
+	}
+
+	private List<T> projectEntities(List entities) {
+		var result = new ArrayList<T>();
+		for (var entity : entities) {
+			result.add(resultType != null ? constructTyped(entity) : (T) buildMap(entity));
+		}
+
+		return result;
+	}
+
+	private Map<String, Object> buildMap(Object entity) {
+		var map = new LinkedHashMap<String, Object>();
+		for (var column : columns) {
+			map.put(column, readValue(entity, column));
+		}
+
+		return map;
+	}
+
+	private T constructTyped(Object entity) {
+		var values = new Object[columns.length];
+		for (var i = 0; i < columns.length; i++) {
+			values[i] = readValue(entity, columns[i]);
+		}
+
+		for (var constructor : resultType.getConstructors()) {
+			if (constructor.getParameterCount() == columns.length) {
+				try {
+					return (T) constructor.newInstance(values);
+				} catch (InstantiationException | IllegalAccessException |
+				         InvocationTargetException e) {
+					throw new RuntimeException("Failed to construct " + resultType.getSimpleName(), e);
+				}
+			}
+		}
+
+		throw new IllegalStateException("No constructor with " + columns.length + " parameters found in " + resultType.getSimpleName());
+	}
+
+	private Object readValue(Object entity, String column) {
+		try {
+			var parts = column.split("\\.");
+			Object current = entity;
+			for (var part : parts) {
+				if (current == null) return null;
+				var getter = "get" + Character.toUpperCase(part.charAt(0)) + part.substring(1);
+				current = current.getClass().getMethod(getter).invoke(current);
+			}
+			return current;
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException("Failed to read column '" + column + "'", e);
+		}
 	}
 
 	private TypedQuery<T> buildTypedQuery() {
@@ -133,8 +232,15 @@ public class ProjectionQuery<T> {
 			var parts = column.split("\\.");
 			From<?, ?> from = root;
 			for (var i = 0; i < parts.length - 1; i++) {
+				var attr = ((ManagedType) from.getModel()).getAttribute(parts[i]);
+				if (isCollectionAssociation(attr)) {
+					throw new IllegalArgumentException(
+						"Column path '" + column + "' traverses collection association '" + parts[i] + "'. " +
+							"Nested collection paths are not yet supported.");
+				}
 				from = from.join(parts[i], JoinType.LEFT);
 			}
+
 			return from.get(parts[parts.length - 1]);
 		}
 
@@ -148,9 +254,16 @@ public class ProjectionQuery<T> {
 
 	private boolean isEntityAssociation(Attribute<?, ?> attr) {
 		var type = attr.getPersistentAttributeType();
-
 		return type == Attribute.PersistentAttributeType.MANY_TO_ONE
 			|| type == Attribute.PersistentAttributeType.ONE_TO_ONE;
+	}
+
+	private boolean isCollectionAssociation(Attribute<?, ?> attr) {
+		var type = attr.getPersistentAttributeType();
+
+		return type == Attribute.PersistentAttributeType.ONE_TO_MANY
+			|| type == Attribute.PersistentAttributeType.MANY_TO_MANY
+			|| type == Attribute.PersistentAttributeType.ELEMENT_COLLECTION;
 	}
 
 	private void applyPredicatesAndSort(CriteriaQuery<?> criteriaQuery, Root root) {
