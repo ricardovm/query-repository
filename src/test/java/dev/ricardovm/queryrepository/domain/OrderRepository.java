@@ -21,6 +21,8 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
 
 		addEntityFetch(Params::fetchItems);
 		addEntityFetch(Params::fetchItemsProduct, "items.product");
+
+		addSortField(Params::sortById_desc);
 	}
 
 	@Override
@@ -41,5 +43,7 @@ public class OrderRepository extends BaseQueryRepository<Order, OrderRepository.
 
 		void fetchItems();
 		void fetchItemsProduct();
+
+		void sortById_desc();
 	}
 }
