@@ -229,15 +229,40 @@ List<OrderSummary> summaries = orderRepository.query(q -> {
 }).columns(OrderSummary.class, "id", "orderDate", "customer").list();
 ```
 
+### Collection columns (`@OneToMany` / `@ManyToMany`)
+
+Collection associations can also be listed as columns. The library fetches them via a JOIN FETCH warm-up so the collection is fully initialized even after the persistence context is cleared:
+
+```java
+List<Map<String, Object>> rows = orderRepository.query(q -> {
+    q.status("SHIPPED");
+}).columns("id", "items").list();
+
+List<OrderItem> items = (List<OrderItem>) rows.get(0).get("items");
+```
+
+For typed results, the constructor must accept the collection type in the corresponding position:
+
+```java
+public class OrderWithItems {
+    public OrderWithItems(Long id, List<OrderItem> items) { ... }
+}
+
+List<OrderWithItems> results = orderRepository.query(q -> {
+    q.status("SHIPPED");
+}).columns(OrderWithItems.class, "id", "items").list();
+```
+
 ### Column path syntax
 
-| Column string     | What is selected                                                  |
-|-------------------|-------------------------------------------------------------------|
-| `"id"`            | Scalar field on the root entity                                   |
-| `"customer"`      | Full associated entity (`@ManyToOne` / `@OneToOne`); auto-joined  |
-| `"customer.name"` | Scalar field reached via an association                           |
+| Column string     | What is selected                                                                          |
+|-------------------|-------------------------------------------------------------------------------------------|
+| `"id"`            | Scalar field on the root entity                                                           |
+| `"customer"`      | Full associated entity (`@ManyToOne` / `@OneToOne`); resolved via LEFT JOIN               |
+| `"customer.name"` | Scalar field reached via an association                                                   |
+| `"items"`         | `@OneToMany` / `@ManyToMany` collection; fetched via JOIN FETCH, returned as `List`       |
 
-Entity associations are resolved via a `LEFT JOIN`, so they are fully initialized and accessible even after the persistence context is cleared — no explicit `fetchX()` param is needed.
+Nested paths may only traverse `@ManyToOne` or `@OneToOne` associations. Paths through collection associations (e.g. `"items.product"`) are not yet supported.
 
 ### Combining with sort
 
@@ -329,8 +354,8 @@ This example demonstrates a custom operation that uses a subquery to find produc
 ## Known Limitations
 
 - It's not possible to use primitive parameters in filter methods. Always use their wrapper classes (e.g., `Integer` instead of `int`, `Long` instead of `long`).
-- No support for `@ElementCollection` or `@ManyToMany` relationships yet.
-- Projection via `.columns(...)` does not support `@OneToMany` or `@ManyToMany` associations as columns. Use entity-level fetch params and return full entities in those cases.
+- No support for `@ElementCollection` or `@ManyToMany` relationships in entity queries yet.
+- Projection via `.columns(...)` does not support nested paths through collection associations (e.g. `"items.product"`). Use top-level collection columns (`"items"`) or full entity queries in those cases.
 
 ## License
 
