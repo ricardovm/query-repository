@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Ricardo Vaz Mannrich
+ * Copyright 2025 Ricardo Vaz Mannrich
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
