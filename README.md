@@ -22,7 +22,7 @@ Add the following dependency to your Maven project:
 <dependency>
     <groupId>dev.ricardovm</groupId>
     <artifactId>query-repository</artifactId>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -30,10 +30,12 @@ Add the following dependency to your Maven project:
 
 | Version | JPA 3.x | Jakarta EE 9+ | Spring Boot 3.x | JPA 2.x | Java EE 8 | Spring Boot 2.x |
 |---------|---------|---------------|-----------------|---------|-----------|-----------------|
-| 0.3.1   | ✅      | ✅            | ✅              | ❌      | ❌        | ❌              |
-| 0.2.0   | ❌      | ❌            | ❌              | ✅      | ✅        | ✅              |
+| 0.4.0   | ✅      | ✅            | ✅              | ❌      | ❌        | ❌              |
+| 0.2.x   | ❌      | ❌            | ❌              | ✅      | ✅        | ✅              |
 
-If you are using JPA2, check [jpa2 branch](https://github.com/ricardovm/query-repository/tree/jpa2) of this repository.
+> **Notice:** The 0.2.x series (JPA 2.x / Java EE 8) is no longer maintained. It will not receive bug fixes or new features. Users are encouraged to upgrade to the current release.
+
+If you are using JPA 2, the last release of the 0.2.x series is available on the [jpa2 branch](https://github.com/ricardovm/query-repository/tree/jpa2) of this repository.
 
 ## Usage
 
