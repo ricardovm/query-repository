@@ -65,6 +65,7 @@ public class Query<T> {
 	 */
 	public Query<T> setMaxResults(int maxResults) {
 		this.maxResults = maxResults;
+
 		return this;
 	}
 
@@ -76,6 +77,7 @@ public class Query<T> {
 	 */
 	public Query<T> setOffset(int offset) {
 		this.firstResult = offset;
+
 		return this;
 	}
 
@@ -88,6 +90,7 @@ public class Query<T> {
 	 */
 	public List<T> list() {
 		state.warmCollections(activatedFetchPaths());
+
 		return buildConfiguredQuery().getResultList();
 	}
 
@@ -99,6 +102,7 @@ public class Query<T> {
 	 */
 	public Stream<T> stream() {
 		state.warmCollections(activatedFetchPaths());
+
 		return buildConfiguredQuery().getResultStream();
 	}
 
