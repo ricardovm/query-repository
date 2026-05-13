@@ -23,6 +23,7 @@ import jakarta.persistence.metamodel.ManagedType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -124,7 +125,7 @@ public class ProjectionQuery<T> {
 			state.warmCollections(collectionColumns);
 			return buildConfiguredQuery(buildPlainEntityQuery())
 				.getResultStream()
-				.map(entity -> resultType != null ? constructTyped(entity) : (T) buildMap(entity));
+				.map(entityMapper());
 		}
 
 		if (resultType != null) {
@@ -177,12 +178,11 @@ public class ProjectionQuery<T> {
 	}
 
 	private List<T> projectEntities(List entities) {
-		var result = new ArrayList<T>();
-		for (var entity : entities) {
-			result.add(resultType != null ? constructTyped(entity) : (T) buildMap(entity));
-		}
+		return (List<T>) entities.stream().map(entityMapper()).collect(Collectors.toList());
+	}
 
-		return result;
+	private Function<Object, T> entityMapper() {
+		return entity -> resultType != null ? constructTyped(entity) : (T) buildMap(entity);
 	}
 
 	private Map<String, Object> buildMap(Object entity) {
