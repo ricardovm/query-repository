@@ -24,6 +24,7 @@ import jakarta.persistence.metamodel.ManagedType;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Executes a projection query that selects a subset of fields instead of whole entities.
@@ -49,11 +50,15 @@ public class ProjectionQuery<T> {
 	private final QueryState state;
 	private final Class<T> resultType;
 	private final String[] columns;
+	private final Integer firstResult;
+	private final Integer maxResults;
 
-	ProjectionQuery(QueryState state, Class<T> resultType, String[] columns) {
+	ProjectionQuery(QueryState state, Class<T> resultType, String[] columns, Integer firstResult, Integer maxResults) {
 		this.state = state;
 		this.resultType = resultType;
 		this.columns = columns;
+		this.firstResult = firstResult;
+		this.maxResults = maxResults;
 	}
 
 	/**
@@ -92,16 +97,41 @@ public class ProjectionQuery<T> {
 		var collectionColumns = findCollectionColumns();
 		if (!collectionColumns.isEmpty()) {
 			state.warmCollections(collectionColumns);
-			return projectEntities(buildPlainEntityQuery().getResultList());
+			var query = buildConfiguredQuery(buildPlainEntityQuery());
+			return projectEntities(query.getResultList());
 		}
 
 		if (resultType != null) {
-			return buildTypedQuery().getResultList();
+			return buildConfiguredQuery(buildTypedQuery()).getResultList();
 		}
 
-		return (List<T>) buildMapQuery().getResultList().stream()
+		return (List<T>) buildConfiguredQuery(buildMapQuery()).getResultList().stream()
 			.map(this::tupleToMap)
 			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Executes the projection query and retrieves the results as a {@link Stream}.
+	 * If a result type is provided, the query will return instances of the specified type.
+	 * Otherwise, the query will return a stream of maps, where each map corresponds to a row
+	 * with column names as keys and their respective values as values.
+	 *
+	 * @return a stream containing the query results.
+	 */
+	public Stream<T> stream() {
+		var collectionColumns = findCollectionColumns();
+		if (!collectionColumns.isEmpty()) {
+			state.warmCollections(collectionColumns);
+			return buildConfiguredQuery(buildPlainEntityQuery())
+				.getResultStream()
+				.map(entity -> resultType != null ? constructTyped(entity) : (T) buildMap(entity));
+		}
+
+		if (resultType != null) {
+			return buildConfiguredQuery(buildTypedQuery()).getResultStream();
+		}
+
+		return (Stream<T>) buildConfiguredQuery(buildMapQuery()).getResultStream().map(this::tupleToMap);
 	}
 
 	private List<String> findCollectionColumns() {
@@ -220,6 +250,17 @@ public class ProjectionQuery<T> {
 		applyPredicatesAndSort(criteriaQuery, root);
 
 		return state.entityManager.createQuery(criteriaQuery);
+	}
+
+	private <Q> TypedQuery<Q> buildConfiguredQuery(TypedQuery<Q> query) {
+		if (firstResult != null) {
+			query.setFirstResult(firstResult);
+		}
+		if (maxResults != null) {
+			query.setMaxResults(maxResults);
+		}
+
+		return query;
 	}
 
 	private List<Selection<?>> buildSelections(Root root) {

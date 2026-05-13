@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a query builder class that facilitates dynamic query creation
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
 public class Query<T> {
 
 	private final QueryState<T> state;
+	private Integer firstResult;
+	private Integer maxResults;
 
 	Query(Class<T> entityClass, EntityManager entityManager, Map<String, FilterEntry> filterEntries,
 		Map<String, Object> filterValues, Map<String, String> fetchEntries, Map<String, SortEntry> sortEntries) {
@@ -55,6 +58,28 @@ public class Query<T> {
 	}
 
 	/**
+	 * Sets the maximum number of results to be returned when executing the query as a list.
+	 *
+	 * @param maxResults the maximum number of results to return
+	 * @return this {@link Query} instance for method chaining
+	 */
+	public Query<T> setMaxResults(int maxResults) {
+		this.maxResults = maxResults;
+		return this;
+	}
+
+	/**
+	 * Sets the offset of the first result to be returned when executing the query as a list.
+	 *
+	 * @param offset the offset of the first result to return
+	 * @return this {@link Query} instance for method chaining
+	 */
+	public Query<T> setOffset(int offset) {
+		this.firstResult = offset;
+		return this;
+	}
+
+	/**
 	 * Executes the query built based on the applied filters and criteria,
 	 * retrieving the result as a list of entities of type {@code T}.
 	 *
@@ -63,8 +88,18 @@ public class Query<T> {
 	 */
 	public List<T> list() {
 		state.warmCollections(activatedFetchPaths());
+		return buildConfiguredQuery().getResultList();
+	}
 
-		return buildQuery().getResultList();
+	/**
+	 * Executes the query built based on the applied filters and criteria,
+	 * retrieving the result as a {@link Stream} of entities of type {@code T}.
+	 *
+	 * @return a stream of entities matching the specified conditions.
+	 */
+	public Stream<T> stream() {
+		state.warmCollections(activatedFetchPaths());
+		return buildConfiguredQuery().getResultStream();
 	}
 
 	private List<String> activatedFetchPaths() {
@@ -93,7 +128,7 @@ public class Query<T> {
 	 * @return a {@link ProjectionQuery} producing maps
 	 */
 	public ProjectionQuery<Map<String, Object>> columns(String... columns) {
-		return new ProjectionQuery<>(state, null, columns);
+		return new ProjectionQuery<>(state, null, columns, firstResult, maxResults);
 	}
 
 	/**
@@ -106,7 +141,7 @@ public class Query<T> {
 	 * @return a {@link ProjectionQuery} producing instances of {@code type}
 	 */
 	public <R> ProjectionQuery<R> columns(Class<R> type, String... columns) {
-		return new ProjectionQuery<>(state, type, columns);
+		return new ProjectionQuery<>(state, type, columns, firstResult, maxResults);
 	}
 
 	private TypedQuery<T> buildQuery() {
@@ -126,6 +161,18 @@ public class Query<T> {
 		}
 
 		return state.entityManager.createQuery(criteriaQuery);
+	}
+
+	private TypedQuery<T> buildConfiguredQuery() {
+		var query = buildQuery();
+		if (firstResult != null) {
+			query.setFirstResult(firstResult);
+		}
+		if (maxResults != null) {
+			query.setMaxResults(maxResults);
+		}
+
+		return query;
 	}
 
 	private TypedQuery<Long> buildCountQuery() {

@@ -127,6 +127,42 @@ class ProjectionQueryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testMapResult_listWithMaxResults() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setMaxResults(1).columns("id", "status").list();
+
+		assertEquals(1, results.size());
+		assertEquals(3L, results.get(0).get("id"));
+	}
+
+	@Test
+	void testMapResult_listWithOffset() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setOffset(1).setMaxResults(1).columns("id", "status").list();
+
+		assertEquals(1, results.size());
+		assertEquals(1L, results.get(0).get("id"));
+	}
+
+	@Test
+	void testMapResult_streamWithOffset() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setOffset(1).setMaxResults(1).columns("id", "status").stream().collect(Collectors.toList());
+
+		assertEquals(1, results.size());
+		assertEquals(1L, results.get(0).get("id"));
+	}
+
+	@Test
 	void testTypedResult_pojoConstructor() {
 		var repo = new OrderRepository(em);
 		List<OrderResult> results = repo.query(f -> f.id(1L))
@@ -194,6 +230,32 @@ class ProjectionQueryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testMapResult_collectionWithMaxResults() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setMaxResults(1).columns("id", "items").list();
+
+		assertEquals(1, results.size());
+		assertEquals(3L, results.get(0).get("id"));
+		assertEquals(3, ((List<?>) results.get(0).get("items")).size());
+	}
+
+	@Test
+	void testMapResult_collectionWithOffset() {
+		var repo = new OrderRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setOffset(1).setMaxResults(1).columns("id", "items").list();
+
+		assertEquals(1, results.size());
+		assertEquals(1L, results.get(0).get("id"));
+		assertEquals(2, ((List<?>) results.get(0).get("items")).size());
+	}
+
+	@Test
 	void testMapResult_emptyCollection() {
 		var repo = new OrderRepository(em);
 		List<Map<String, Object>> results = repo.query(f -> f.id(4L))
@@ -252,6 +314,22 @@ class ProjectionQueryTest extends BaseJpaTest {
 		List<OrderWithItemsResult> results = repo.query(f -> f.id(1L))
 			.columns(OrderWithItemsResult.class, "id", "items")
 			.list();
+
+		em.clear();
+
+		assertEquals(1, results.size());
+		var result = results.get(0);
+		assertEquals(1L, result.getId());
+		assertEquals(2, result.getItems().size());
+	}
+
+	@Test
+	void testTypedResult_streamWithCollection() {
+		var repo = new OrderRepository(em);
+		List<OrderWithItemsResult> results = repo.query(f -> f.id(1L))
+			.columns(OrderWithItemsResult.class, "id", "items")
+			.stream()
+			.collect(Collectors.toList());
 
 		em.clear();
 

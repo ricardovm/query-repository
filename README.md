@@ -188,7 +188,7 @@ List<Order> orders = orderRepository.query(q -> {
     q.fetchItems();
     q.fetchItemsProduct();
     q.sortByTotal_desc();
-}).list();
+}).setOffset(20).setMaxResults(10).list();
 
 // Or get a single result
 Optional<Order> order = orderRepository.query(q -> {
@@ -274,7 +274,7 @@ Sort params applied before `.columns(...)` take effect on the projection query:
 List<Map<String, Object>> rows = orderRepository.query(q -> {
     q.status_in(List.of("SHIPPED", "COMPLETED"));
     q.sortByDate_desc();
-}).columns("id", "status", "orderDate").list();
+}).setOffset(1).setMaxResults(1).columns("id", "status", "orderDate").list();
 ```
 
 ## Filter Naming Conventions

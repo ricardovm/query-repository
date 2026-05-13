@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -153,6 +154,42 @@ class OrderRepositoryTest extends BaseJpaTest {
 		}).get();
 
 		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	void testListWithMaxResults() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setMaxResults(1).list();
+
+		assertEquals(1, orders.size());
+		assertEquals(3L, orders.get(0).getId());
+	}
+
+	@Test
+	void testListWithOffset() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setOffset(1).setMaxResults(1).list();
+
+		assertEquals(1, orders.size());
+		assertEquals(1L, orders.get(0).getId());
+	}
+
+	@Test
+	void testStreamWithOffsetAndMaxResults() {
+		var orderRepository = new OrderRepository(em);
+		var orders = orderRepository.query(f -> {
+			f.status_in(List.of("SHIPPED", "COMPLETED"));
+			f.sortById_desc();
+		}).setOffset(1).setMaxResults(1).stream().collect(Collectors.toList());
+
+		assertEquals(1, orders.size());
+		assertEquals(1L, orders.get(0).getId());
 	}
 
 	@Test
