@@ -22,6 +22,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,9 +53,8 @@ public class Query<T> {
 	 * or an empty {@link Optional} if the result list is empty.
 	 */
 	public Optional<T> get() {
-		state.warmCollections(activatedFetchPaths());
-
-		return buildQuery().setMaxResults(1).getResultList().stream().findFirst();
+		return executeWithFetch(activatedFetchPaths(),
+			() -> buildQuery().setMaxResults(1).getResultList().stream().findFirst());
 	}
 
 	/**
@@ -89,9 +89,8 @@ public class Query<T> {
 	 * list if no results are found.
 	 */
 	public List<T> list() {
-		state.warmCollections(activatedFetchPaths());
-
-		return buildConfiguredQuery().getResultList();
+		return executeWithFetch(activatedFetchPaths(),
+			() -> buildConfiguredQuery().getResultList());
 	}
 
 	/**
@@ -101,9 +100,44 @@ public class Query<T> {
 	 * @return a stream of entities matching the specified conditions.
 	 */
 	public Stream<T> stream() {
-		state.warmCollections(activatedFetchPaths());
+		return executeWithFetch(activatedFetchPaths(),
+			() -> buildConfiguredQuery().getResultStream());
+	}
 
-		return buildConfiguredQuery().getResultStream();
+	private <R> R executeWithFetch(List<String> paths, Supplier<R> execution) {
+		if (paths.isEmpty()) {
+			return execution.get();
+		}
+
+		if (state.isJtaEnvironment()) {
+			if (!state.entityManager.isJoinedToTransaction()) {
+				throw new IllegalStateException(
+					"Fetch operations require an active transaction in JTA environments. " +
+					"Ensure a transaction is active before calling fetch methods.");
+			}
+			state.warmCollections(paths);
+
+			return execution.get();
+		}
+
+		var tx = state.entityManager.getTransaction();
+		if (!tx.isActive()) {
+			tx.begin();
+			try {
+				state.warmCollections(paths);
+				var result = execution.get();
+				tx.commit();
+
+				return result;
+			} catch (RuntimeException e) {
+				tx.rollback();
+				throw e;
+			}
+		}
+
+		state.warmCollections(paths);
+
+		return execution.get();
 	}
 
 	private List<String> activatedFetchPaths() {

@@ -44,6 +44,16 @@ class QueryState<E> {
 		this.criteriaBuilder = entityManager.getCriteriaBuilder();
 	}
 
+	boolean isJtaEnvironment() {
+		try {
+			entityManager.getTransaction();
+
+			return false;
+		} catch (IllegalStateException e) {
+			return true;
+		}
+	}
+
 	void warmCollections(List<String> paths) {
 		for (String path : paths) {
 			buildWarmupQuery(path).getResultList();
