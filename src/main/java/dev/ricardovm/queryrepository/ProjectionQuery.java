@@ -20,6 +20,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.ManagedType;
+import jakarta.persistence.metamodel.SingularAttribute;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -285,13 +286,15 @@ public class ProjectionQuery<T> {
 		if (column.contains(".")) {
 			var parts = column.split("\\.");
 			From<?, ?> from = root;
+			ManagedType<?> managedType = root.getModel();
 			for (var i = 0; i < parts.length - 1; i++) {
-				var attr = ((ManagedType) from.getModel()).getAttribute(parts[i]);
+				var attr = managedType.getAttribute(parts[i]);
 				if (isCollectionAssociation(attr)) {
 					throw new IllegalArgumentException(
 						"Column path '" + column + "' traverses collection association '" + parts[i] + "'. " +
 							"Nested collection paths are not yet supported.");
 				}
+				managedType = (ManagedType<?>) ((SingularAttribute<?, ?>) attr).getType();
 				from = from.join(parts[i], JoinType.LEFT);
 			}
 

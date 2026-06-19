@@ -70,6 +70,19 @@ class ProjectionQueryTest extends BaseJpaTest {
 	}
 
 	@Test
+	void testMapResult_deepNestedPathColumn() {
+		var repo = new OrderItemRepository(em);
+		List<Map<String, Object>> results = repo.query(f -> f.id(1L))
+			.columns("id", "product.category.name")
+			.list();
+
+		assertEquals(1, results.size());
+		var result = results.get(0);
+		assertEquals(1L, result.get("id"));
+		assertEquals("Electronics", result.get("product.category.name"));
+	}
+
+	@Test
 	void testMapResult_listMultipleResults() {
 		var repo = new OrderRepository(em);
 		List<Map<String, Object>> results = repo.query(f -> f.status_in(List.of("SHIPPED", "COMPLETED")))
